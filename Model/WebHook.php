@@ -70,9 +70,13 @@ class WebHook {
             $mfObj = new PaymentMyfatoorahApiV2($apiKey, $countryMode, $isTesting, MYFATOORAH_LOG_FILE);
 
             //get MyFatoorah Signature from request headers
-            $apache      = apache_request_headers();
-            $headers     = array_change_key_case($apache);
-            $mfSignature = empty($headers['myfatoorah-signature']) ? die : $headers['myfatoorah-signature'];
+            $apache  = apache_request_headers();
+            $headers = array_change_key_case($apache);
+
+            if (empty($headers['myfatoorah-signature'])) {
+                return;
+            }
+            $mfSignature = $headers['myfatoorah-signature'];
 
             //validate signature
             if (!$mfObj->isSignatureValid($data, $webhookSecretKey, $mfSignature)) {
