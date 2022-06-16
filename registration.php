@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('BP')) {
+    define('BP', dirname(getcwd()));
+}
+
 if (!defined('MYFATOORAH_LOG_FILE')) {
     define('MYFATOORAH_LOG_FILE', BP . '/var/log/myfatoorah.log');
 }
@@ -12,3 +16,4 @@ if (!defined('MFSHIPPING_LOG_FILE')) {
         'MyFatoorah_Gateway',
         __DIR__
 );
+

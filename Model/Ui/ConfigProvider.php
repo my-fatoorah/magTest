@@ -11,7 +11,7 @@ use Magento\Checkout\Model\Cart;
 /**
  * Class ConfigProvider
  */
-final class ConfigProvider implements ConfigProviderInterface {
+class ConfigProvider implements ConfigProviderInterface {
 
     /**
      * @var Config
