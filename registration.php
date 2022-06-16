@@ -16,4 +16,3 @@ if (!defined('MFSHIPPING_LOG_FILE')) {
         'MyFatoorah_Gateway',
         __DIR__
 );
-
