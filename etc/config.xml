@@ -36,7 +36,7 @@
         </payment>
         <carriers>
             <myfatoorah_shipping>
-                <active>1</active>
+                <active>0</active> <!--Plugin disabled by default. The user must configure it first.-->
                 <sallowspecific>0</sallowspecific>
                 <model>MyFatoorah\Gateway\Model\Carrier\Shipping</model>
                 <title>MyFatoorah</title>
