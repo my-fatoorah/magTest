@@ -41,7 +41,7 @@
                 <model>MyFatoorah\Gateway\Model\Carrier\Shipping</model>
                 <title>MyFatoorah</title>
                 <name>Shipping</name>
-                <specificerrmsg>MyFatoorah Shipping Methods for API ver2</specificerrmsg>
+                <specificerrmsg>This shipping method is currently unavailable. If you would like to ship using this shipping method, please contact us.</specificerrmsg>
                 <is_testing>1</is_testing>
             </myfatoorah_shipping>
         </carriers>

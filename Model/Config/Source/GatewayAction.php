@@ -9,7 +9,7 @@ class GatewayAction implements \Magento\Framework\Option\ArrayInterface {
      */
     public function toOptionArray() {
         return array(
-            ['value' => 'myfatoorah', 'label' => 'MyFatoorah Invoice Page (Redirect)'],
+            ['value' => 'myfatoorah', 'label' => 'Redirect to MyFatoorah Invoice Page'],
             ['value' => 'multigateways', 'label' => 'List All Enabled Gateways in Checkout Page'],
         );
     }

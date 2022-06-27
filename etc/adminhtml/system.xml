@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <section id="payment">
-            <group id="myfatoorah_payment" translate="label" sortOrder="100" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="myfatoorah_payment" translate="label" sortOrder="0" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>MyFatoorah Payment</label>
                 <field id="active" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enabled</label>
@@ -14,7 +14,7 @@
                     <validate>required-entry</validate>
                 </field>
                 <field id="countryMode" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>vendor's Country</label>
+                    <label>Vendor's Country</label>
                     <tooltip>Select your MyFatoorah vendor's country. After that, use the API token key that belongs to this country.</tooltip>
                     <source_model>MyFatoorah\Gateway\Model\Config\Source\VendorCountry</source_model>
                     <validate>required-entry</validate>
@@ -24,7 +24,7 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="api_key" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>API Key</label>
+                    <label>API Token Key</label>
                     <validate>required-entry</validate>
                 </field>
                 <field id="save_card" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -33,7 +33,7 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="listInvoiceItems" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>List invoice items</label>
+                    <label>List Invoice Items</label>
                     <tooltip>Disabling this option means that MyFatoorah creates invoices using the order total amount. This option is non applicable if MyFatoorah Shipping is used.</tooltip>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
@@ -45,7 +45,7 @@
                 </field>
                 
                 <field id="myfatoorah_approved_order_status" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Status for myfatoorah Approved Orders</label>
+                    <label>Order Status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
                     <!--<tooltip>Select ‘MyFatoorah Processed’ if you want to easily locate all MyFatoorah transactions in the Orders page.</tooltip>-->
                     <validate>required-entry</validate>
@@ -81,68 +81,56 @@
                 </field>
             </group>
         </section>
-        <section id="carriers" translate="label" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
+        <section id="carriers">
             <group id="myfatoorah_shipping" translate="label" type="text" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>MyFatoorah Shipping API v2</label>
+                <label>MyFatoorah Shipping</label>
                 
-                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                <field id="active" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <backend_model>MyFatoorah\Gateway\Model\System\Config\Backend\ValidateShippingConfigData</backend_model>
                 </field>
                 
                 
-                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="title" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Title</label>
                 </field>
 
                 
-                <field id="methods" translate="label" type="multiselect" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="methods" translate="label" type="multiselect" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Method Name</label>
                     <source_model>MyFatoorah\Gateway\Model\Config\Source\Methods</source_model>
-                    <can_be_empty>1</can_be_empty>
-                </field>               
-                
-                
-                <!--                <field id="apiKey" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>API Key</label>
                     <validate>required-entry</validate>
                 </field>
+                              
                 
-                
-                <field id="isTesting" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Is Testing?</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>-->
-                
-                
-                <field id="specificerrmsg" translate="label" type="textarea" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
-                    <label>Displayed Error Message</label>
-                </field>
-                
-                
-                <field id="sallowspecific" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                <field id="sallowspecific" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Ship to Applicable Countries</label>
                     <frontend_class>shipping-applicable-country</frontend_class>
                     <source_model>Magento\Shipping\Model\Config\Source\Allspecificcountries</source_model>
                 </field>
                 
                 
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="91" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificcountry" translate="label" type="multiselect" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Ship to Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
                 
                 
-                <field id="showmethod" translate="label" type="select" sortOrder="92" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="showmethod" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Show Method if Not Applicable</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <frontend_class>shipping-skip-hide</frontend_class>
                 </field>
                 
                 
-                <field id="sort_order" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="specificerrmsg" translate="label" type="textarea" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Displayed Error Message</label>
+                </field>
+                
+                
+                <field id="sort_order" translate="label" type="text" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                 </field>
                 

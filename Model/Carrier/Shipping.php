@@ -169,7 +169,8 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
             return $rateResult;
         } catch (\Exception $ex) {
-            return $this->getError($ex->getMessage());
+            $this->sMFObj->log('In Shipping exception block - ' . $ex->getMessage());
+            return []; //$this->getError($ex->getMessage());
         }
     }
 
