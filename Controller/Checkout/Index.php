@@ -3,17 +3,20 @@
 namespace MyFatoorah\Gateway\Controller\Checkout;
 
 use Magento\Sales\Model\Order;
+use Exception as MFException;
 
-class Index extends AbstractAction {
+class Index extends AbstractAction
+{
 
     public $orderId = null;
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * @return void
      */
-    public function execute() {
+    public function execute()
+    {
 
         try {
             $order = $this->getOrder();
@@ -32,17 +35,19 @@ class Index extends AbstractAction {
             } else {
                 $this->postToCheckout($order);
             }
-        } catch (\Exception $ex) {
+        } catch (MFException $ex) {
             $err = $ex->getMessage();
             $url = $this->getDataHelper()->getCancelledUrl($this->orderId, urlencode($err));
             $this->_redirect($url);
         }
     }
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /** @var \Magento\Sales\Model\Order $order */
-    private function getPayload($order, $gateway = null) {
+    /**
+     * @var \Magento\Sales\Model\Order $order
+     */
+    private function getPayload($order, $gateway = null)
+    {
 
         $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
@@ -50,7 +55,7 @@ class Index extends AbstractAction {
         if (!is_object($addressObj)) {
             $addressObj = $order->getBillingAddress();
             if (!is_object($addressObj)) {
-                throw new \Exception('Billing Address or Shipping address Data Should be set to create the invoice');
+                throw new MFException('Billing Address or Shipping address Data Should be set to create the invoice');
             }
         }
 
@@ -72,26 +77,19 @@ class Index extends AbstractAction {
 
         $email = $order->getData('customer_email'); //$order->getCustomerEmail()
 
-
-        $getLocale = $this->objectManager->get('Magento\Framework\Locale\Resolver');
+        $getLocale = $this->objectManager->get(\Magento\Framework\Locale\Resolver::class);
         $haystack  = $getLocale->getLocale();
         $lang      = strstr($haystack, '_', true);
 
         $phone = $this->mfObj->getPhone($phoneNo);
-//        $url   = $this->getDataHelper()->getCompleteUrl();
         $url   = $this->getDataHelper()->getProcessUrl();
 
-        $userDefinedField = ($this->_gatewayConfig->getSaveCard() && $order->getCustomerId()) ? 'CK-' . $order->getCustomerId() : null;
+        $isUserDefinedField = ($this->_gatewayConfig->getSaveCard() && $order->getCustomerId());
 
-        $shippingMethod = $order->getShippingMethod();
-        $isShipping     = null;
-        if (($shippingMethod == 'myfatoorah_shipping_1') || ($shippingMethod == 'myfatoorah_shippingDHL_myfatoorah_shippingDHL')) {
-            $isShipping = 1;
-        } else if (($shippingMethod == 'myfatoorah_shipping_2') || ($shippingMethod == 'myfatoorah_shippingAramex_myfatoorah_shippingAramex')) {
-            $isShipping = 2;
-        }
+        $osm = $order->getShippingMethod();
+        $mfShipping = ($osm == 'myfatoorah_shipping_1') ? 1 : (($osm == 'myfatoorah_shipping_2') ? 2 : null);
 
-        $shippingConsignee = !$isShipping ? '' : array(
+        $shippingConsignee = !$mfShipping ? '' : [
             'PersonName'   => "$fName $lName",
             'Mobile'       => trim($phone[1]),
             'EmailAddress' => $email,
@@ -99,17 +97,23 @@ class Index extends AbstractAction {
             'CityName'     => $city,
             'PostalCode'   => $postcode,
             'CountryCode'  => $countryCode
-        );
+        ];
 
         $currency = $this->getCurrencyData($gateway);
 
         //$invoiceItemsArr
-        if ($isShipping || $this->_gatewayConfig->listInvoiceItems()) {
+        if ($mfShipping || $this->_gatewayConfig->listInvoiceItems()) {
+            $cHelper = $this->getCheckoutHelper();
+            
             $invoiceValue    = 0;
-            $invoiceItemsArr = $this->getCheckoutHelper()->getInvoiceItems($order, $currency['rate'], $isShipping, $invoiceValue, true);
+            $invoiceItemsArr = $cHelper->getInvoiceItems($order, $currency['rate'], $mfShipping, $invoiceValue, true);
         } else {
             $invoiceValue    = round($order->getBaseTotalDue() * $currency['rate'], 3);
-            $invoiceItemsArr = [['ItemName' => "Total Amount Order #$this->orderId", 'Quantity' => 1, 'UnitPrice' => "$invoiceValue"]];
+            $invoiceItemsArr = [[
+                'ItemName'  => "Total Amount Order #$this->orderId",
+                'Quantity'  => 1,
+                'UnitPrice' => "$invoiceValue"
+            ]];
         }
 
         //ExpiryDate
@@ -117,10 +121,13 @@ class Index extends AbstractAction {
 
         $ExpiryDate = new \DateTime('now', new \DateTimeZone('Asia/Kuwait'));
         $ExpiryDate->modify("+$expireAfter minute");
+
+        $magVersion = $this->objectManager->get(\Magento\Framework\App\ProductMetadataInterface::class)->getVersion();
+        $mfVersion  = $this->getGatewayConfig()->getCode() . ' ' . $this->getGatewayConfig()->getVersion();
         return [
             'CustomerName'       => $fName . ' ' . $lName,
             'InvoiceValue'       => "$invoiceValue",
-            'DisplayCurrencyIso' => $currency['code'], //$order->getOrderCurrencyCode(),
+            'DisplayCurrencyIso' => $currency['code'],
             'MobileCountryCode'  => trim($phone[0]),
             'CustomerMobile'     => trim($phone[1]),
             'CustomerEmail'      => $email,
@@ -129,9 +136,9 @@ class Index extends AbstractAction {
             'Language'           => $lang,
             'CustomerReference'  => $this->orderId,
             'CustomerCivilId'    => null,
-            'UserDefinedField'   => $userDefinedField,
+            'UserDefinedField'   => $isUserDefinedField ? 'CK-' . $order->getCustomerId() : null,
             'ExpiryDate'         => $ExpiryDate->format('Y-m-d\TH:i:s'),
-            'SourceInfo'         => 'Magento2 ' . $this->objectManager->get('Magento\Framework\App\ProductMetadataInterface')->getVersion() . ' - ' . $this->getGatewayConfig()->getCode() . ' ' . $this->getGatewayConfig()->getVersion(),
+            'SourceInfo'         => 'Magento2 ' . $magVersion . ' - ' . $mfVersion,
             'CustomerAddress'    => [
                 'Block'               => '',
                 'Street'              => '',
@@ -140,15 +147,18 @@ class Index extends AbstractAction {
                 'AddressInstructions' => $street
             ],
             'ShippingConsignee'  => $shippingConsignee,
-            'ShippingMethod'     => $isShipping,
+            'ShippingMethod'     => $mfShipping,
             'InvoiceItems'       => $invoiceItemsArr
         ];
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    function getCurrencyData($gateway) {
-        /** @var \Magento\Store\Model\StoreManagerInterface  $StoreManagerInterface */
-        $store = $this->objectManager->create('Magento\Store\Model\StoreManagerInterface')->getStore();
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    protected function getCurrencyData($gateway)
+    {
+        /**
+         * @var \Magento\Store\Model\StoreManagerInterface  $StoreManagerInterface
+         */
+        $store = $this->objectManager->create(\Magento\Store\Model\StoreManagerInterface::class)->getStore();
 
         $KWDcurrencyRate = (double) $store->getBaseCurrency()->getRate('KWD');
         if ($gateway == 'kn' && !empty($KWDcurrencyRate)) {
@@ -157,37 +167,40 @@ class Index extends AbstractAction {
         } else {
             $currencyCode = $store->getBaseCurrencyCode();
             $currencyRate = 1;
-            //(double) $this->objectManager->create('Magento\Store\Model\StoreManagerInterface')->getStore()->getCurrentCurrencyRate();
+            //(double) getCurrentCurrencyRate;
         }
         return ['code' => $currencyCode, 'rate' => $currencyRate];
     }
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /** @var \Magento\Sales\Model\Order $order */
-    private function postToCheckout($order) {
+    /**
+     * @var \Magento\Sales\Model\Order $order
+     */
+    private function postToCheckout($order)
+    {
 
         $gatewayId = $this->getRequest()->get('pm') ?: 'myfatoorah';
         $sessionId = $this->getRequest()->get('sid') ?: null;
 
         if (!$sessionId && !$gatewayId) {
-            throw new \Exception('Invalid Payment Session');
+            throw new MFException('Invalid Payment Session');
         }
 
         $curlData = $this->getPayload($order);
         $data     = $this->mfObj->getInvoiceURL($curlData, $gatewayId, $this->orderId, $sessionId);
 
-        //save the invoice id in myfatoorah_invoice table 
-        $mf = $this->objectManager->create('MyFatoorah\Gateway\Model\MyfatoorahInvoice');
-        $mf->addData([
-            'order_id'     => $this->orderId,
-            'invoice_id'   => $data['invoiceId'],
-            'gateway_name' => 'MyFatoorah',
-            'invoice_url'  => $data['invoiceURL'],
-        ]);
+        //save the invoice id in myfatoorah_invoice table
+        $mf = $this->objectManager->create(\MyFatoorah\Gateway\Model\MyfatoorahInvoice::class);
+        $mf->addData(
+            [
+                'order_id'     => $this->orderId,
+                'invoice_id'   => $data['invoiceId'],
+                'gateway_name' => 'MyFatoorah',
+                'invoice_url'  => ($sessionId) ? '' : $data['invoiceURL'],
+            ]
+        );
         $mf->save();
         $this->_redirect($data['invoiceURL']);
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

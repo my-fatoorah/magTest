@@ -2,16 +2,22 @@
 
 namespace MyFatoorah\Gateway\Controller\Checkout;
 
-class Process extends AbstractAction {
+class Process extends AbstractAction
+{
 
-    public function execute() {
+    public function execute()
+    {
 
         $paymentId = $this->getRequest()->get('paymentId');
+        $url       = $this->getDataHelper()->getCompleteUrl();
 
-        print_r('
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
+        print_r(
+            '
 <!DOCTYPE html>
 <html lang="en-US">
     <head>
+        <title>Processing MyFatoorah</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             body {
@@ -46,9 +52,9 @@ class Process extends AbstractAction {
             <br/><br/>
             <div class="loader"></div>
         </center>
-        <script>window.location = "' . $this->getDataHelper()->getCompleteUrl() . '?paymentId=' . $paymentId . '";</script>
+        <script>window.location = "' . $url . '?paymentId=' . $paymentId . '";</script>
     </body>
-</html>');
+</html>'
+        );
     }
-
 }

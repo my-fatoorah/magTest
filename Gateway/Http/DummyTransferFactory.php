@@ -6,7 +6,8 @@ use Magento\Payment\Gateway\Http\TransferBuilder;
 use Magento\Payment\Gateway\Http\TransferFactoryInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
 
-class DummyTransferFactory implements TransferFactoryInterface {
+class DummyTransferFactory implements TransferFactoryInterface
+{
 
     /**
      * @var TransferBuilder
@@ -17,13 +18,12 @@ class DummyTransferFactory implements TransferFactoryInterface {
      * @param TransferBuilder $transferBuilder
      */
     public function __construct(
-            TransferBuilder $transferBuilder
+        TransferBuilder $transferBuilder
     ) {
         $this->transferBuilder = $transferBuilder;
     }
 
     /**
-     *
      * This is the place where the transfer objects for the the Payment Gateway
      * API requests are created. As we are a Redirect-based gateway and only used
      * the "initialize" method, we don't place API invocations or requests to the
@@ -38,11 +38,11 @@ class DummyTransferFactory implements TransferFactoryInterface {
      *
      * @return TransferInterface
      */
-    public function create(array $request) {
+    public function create(array $request)
+    {
         return $this->transferBuilder//ignored...
-                        ->setBody($request)
-                        ->setMethod('POST')
-                        ->build();
+            ->setBody($request)
+            ->setMethod('POST')
+            ->build();
     }
-
 }

@@ -2,15 +2,20 @@
 
 namespace MyFatoorah\Gateway\Api;
 
-interface WebHookInterface {
+/**
+ * Webhook feature is used to trigger events each time the order status changes at the MyFatoorah side.
+ */
+interface WebHookInterface
+{
 
     /**
-     * 
-     * @param integer $EventType
-     * @param string $Event
-     * @param string $DateTime
-     * @param string $CountryIsoCode
-     * @param string[] $Data
+     * Webhook feature will recover the lost orders due to connection loss or delayed callbacks.
+     *
+     * @param  integer  $EventType
+     * @param  string   $Event
+     * @param  string   $DateTime
+     * @param  string   $CountryIsoCode
+     * @param  string[] $Data
      * @return string
      */
     public function execute($EventType, $Event, $DateTime, $CountryIsoCode, $Data);

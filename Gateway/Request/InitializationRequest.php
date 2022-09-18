@@ -8,18 +8,19 @@ use Magento\Payment\Gateway\Data\Order\OrderAdapter;
 use Magento\Payment\Gateway\Request\BuilderInterface;
 use Magento\Sales\Model\Order;
 
-class InitializationRequest implements BuilderInterface {
+class InitializationRequest implements BuilderInterface
+{
 
     private $_session;
     private $_gatewayConfig;
 
     /**
-     * @param Config $gatewayConfig
+     * @param Config  $gatewayConfig
      * @param Session $session
      */
     public function __construct(
-            Config $gatewayConfig,
-            Session $session
+        Config $gatewayConfig,
+        Session $session
     ) {
         $this->_gatewayConfig = $gatewayConfig;
         $this->_session       = $session;
@@ -32,7 +33,8 @@ class InitializationRequest implements BuilderInterface {
      *
      * @return bool;
      */
-    private function validateQuote($order) {
+    private function validateQuote($order)
+    {
         return true;
     }
 
@@ -48,7 +50,8 @@ class InitializationRequest implements BuilderInterface {
      *
      * @return array
      */
-    public function build(array $buildSubject) {
+    public function build(array $buildSubject)
+    {
 
         $payment     = $buildSubject['payment'];
         $stateObject = $buildSubject['stateObject'];
@@ -67,5 +70,4 @@ class InitializationRequest implements BuilderInterface {
 
         return ['IGNORED' => ['IGNORED']];
     }
-
 }

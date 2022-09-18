@@ -11,6 +11,7 @@
 
                 <!--<api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted"/>-->
                 <is_testing>1</is_testing>
+                <isApplePayRegistered>0</isApplePayRegistered>
 
                 <automatic_invoice>1</automatic_invoice>
                 <sort_order>0</sort_order>

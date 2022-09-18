@@ -5,7 +5,7 @@ namespace MyFatoorah\Gateway\Model\System\Config\Backend;
 use Magento\Framework\App\Config\Value;
 use MyFatoorah\Library\PaymentMyfatoorahApiV2;
 
-class ValidatePaymentConfigData extends Value
+class ValidateApplePayRegistered extends Value
 {
 
     /**
@@ -14,15 +14,15 @@ class ValidatePaymentConfigData extends Value
     protected $messageManager;
 
     /**
-     * @var \Magento\Framework\App\Config\Storage\WriterInterface
+     * @var \Magento\Framework\UrlInterface
      */
-    protected $configWriter;
+    protected $urlInterface;
 
     //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * @param \Magento\Framework\Message\ManagerInterface                  $messageManager
-     * @param \Magento\Framework\App\Config\Storage\WriterInterface        $configWriter
+     * @param \Magento\Framework\UrlInterface                              $urlInterface
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param ScopeConfigInterface                                         $config
@@ -33,7 +33,7 @@ class ValidatePaymentConfigData extends Value
      */
     public function __construct(
         \Magento\Framework\Message\ManagerInterface $messageManager,
-        \Magento\Framework\App\Config\Storage\WriterInterface $configWriter,
+        \Magento\Framework\UrlInterface $urlInterface,
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
@@ -44,73 +44,59 @@ class ValidatePaymentConfigData extends Value
     ) {
         parent::__construct($context, $registry, $config, $cacheTypeList, $resource, $resourceCollection, $data);
         $this->messageManager = $messageManager;
-        $this->configWriter   = $configWriter;
+        $this->urlInterface   = $urlInterface;
     }
 
     //---------------------------------------------------------------------------------------------------------------------------------------------------
     public function beforeSave()
     {
 
-        if (!$this->getValue()) {
-            $this->disableShipping();
+        //if any don't register
+        if (!$this->getValue() || !$this->getFieldsetDataValue('active')) {
             return parent::beforeSave();
         }
 
+        //check list option
+        if ($this->getFieldsetDataValue('list_options') == 'myfatoorah') {
+            $msg = 'MyFatoorah: registering your domain with MyFatoorah and Apple Pay works only '
+                . 'if you select "List All Enabled Gateways in Checkout Page" '
+                . 'from the "List Payment Options" option.';
+            
+            $this->messageManager->addWarning(__($msg));
+
+            $this->setValue(0);
+            return parent::beforeSave();
+        }
+
+        //register
         $apiKey      = $this->getFieldsetDataValue('api_key');
         $CountryCode = $this->getFieldsetDataValue('countryMode');
         $isTest      = $this->getFieldsetDataValue('is_testing');
 
         $mfObj = new PaymentMyfatoorahApiV2($apiKey, $CountryCode, $isTest);
 
+        $siteURL = $this->urlInterface->getCurrentUrl();
         try {
-            $paymentMethods = $mfObj->getVendorGateways();
+            $data = $mfObj->registerApplePayDomain($siteURL);
+            if ($data->Message == 'OK') {
+                return parent::beforeSave();
+            }
+            $err = $data->Message;
         } catch (\Exception $ex) {
-            return $this->disableWithError(
-                'MyFatoorah: can not enable MyFatoorah Payment due to: '
-                . $ex->getMessage()
-            );
+            $err = 'MyFatoorah: can not register Apple Pay due to: ' . $ex->getMessage();
         }
-
-        if (empty($paymentMethods)) {
-            return $this->disableWithError(
-                'MyFatoorah: please, contact your account manager '
-                . 'to activate at least one of the available payment methods in your account '
-                . 'to enable the payment model.'
-            );
-        }
-
-        return parent::beforeSave();
+        return $this->disableWithError($err);
     }
 
     //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     private function disableWithError($err)
     {
-        $this->disableShipping();
 
         $this->messageManager->addError(__($err));
+
         $this->setValue(0);
-
         return parent::beforeSave();
-        //        throw new \Magento\Framework\Exception\LocalizedException(__($err));
-    }
-
-    //---------------------------------------------------------------------------------------------------------------------------------------------------
-
-    private function disableShipping()
-    {
-
-        $path  = 'carriers/myfatoorah_shipping/active';
-        //$scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
-        $scope = $this->getScope() ?: ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
-        $code  = $this->getScopeCode();
-
-        $isShippingActive = $this->_config->getValue($path, $scope, $code);
-
-        if ($isShippingActive) {
-            $this->configWriter->save($path, 0, $scope, $code);
-            $this->messageManager->addWarning(__('Warning: MyFatoorah Shipping is disabled'));
-        }
     }
     //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

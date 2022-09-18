@@ -9,22 +9,20 @@
 namespace MyFatoorah\Gateway\Model\Config\Source;
 
 /**
-
  * Class GatewayAction
-
  */
-class Methods implements \Magento\Framework\Option\ArrayInterface {
+class Methods implements \Magento\Framework\Option\ArrayInterface
+{
 
     /**
-
      * {@inheritdoc}
-
      */
-    public function toOptionArray() {
-        return array(
+    public function toOptionArray()
+    {
+        return [
             ['value' => '1', 'label' => __('DHL')],
             ['value' => '2', 'label' => __('Aramex')]
-        );
+        ];
     }
 
     /**
@@ -32,10 +30,10 @@ class Methods implements \Magento\Framework\Option\ArrayInterface {
      *
      * @return array
      */
-//    public function toArray() {
-//        return [
-//            '1' => 'DHL',
-//            '2' => 'Aramex'
-//        ];
-//    }
+    //    public function toArray() {
+    //        return [
+    //            '1' => 'DHL',
+    //            '2' => 'Aramex'
+    //        ];
+    //    }
 }

@@ -6,18 +6,19 @@ use MyFatoorah\Gateway\Gateway\Config\Config;
 use Magento\Checkout\Model\Session;
 use Magento\Payment\Gateway\Request\BuilderInterface;
 
-class RefundRequest implements BuilderInterface {
+class RefundRequest implements BuilderInterface
+{
 
     private $_session;
     private $_gatewayConfig;
 
     /**
-     * @param Config $gatewayConfig
+     * @param Config  $gatewayConfig
      * @param Session $session
      */
     public function __construct(
-            Config $gatewayConfig,
-            Session $session
+        Config $gatewayConfig,
+        Session $session
     ) {
         $this->_gatewayConfig = $gatewayConfig;
         $this->_session       = $session;
@@ -30,9 +31,8 @@ class RefundRequest implements BuilderInterface {
      * 'payment' => $this->getInfoInstance()
      * 'paymentAction' => $paymentAction
      * 'stateObject' => $stateObject
-     * 
+     *
      * rs: The $buildSubject contains:
-     * 
      *
      * @param array $buildSubject
      * 'payment'
@@ -40,12 +40,12 @@ class RefundRequest implements BuilderInterface {
      *
      * @return array
      */
-    public function build(array $buildSubject) {
+    public function build(array $buildSubject)
+    {
 
         return [
             'GATEWAY_REFUND_GATEWAY_URL' => $this->_gatewayConfig->getRefundUrl(),
             'GATEWAY_Myfatoorah_OBJ'     => $this->_gatewayConfig->getMyfatoorahObject(),
         ];
     }
-
 }

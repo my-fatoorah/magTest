@@ -5,7 +5,8 @@ namespace MyFatoorah\Gateway\Gateway\Http\Client;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
 
-class DummyClient implements ClientInterface {
+class DummyClient implements ClientInterface
+{
 
     /**
      * This is the place where requests to the Payment Gateway API are placed.
@@ -22,10 +23,10 @@ class DummyClient implements ClientInterface {
      *
      * @return array
      */
-    public function placeRequest(TransferInterface $transferObject) {
+    public function placeRequest(TransferInterface $transferObject)
+    {
         $response = ['IGNORED' => ['IGNORED']];
 
         return $response;
     }
-
 }

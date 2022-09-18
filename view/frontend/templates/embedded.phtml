@@ -8,13 +8,21 @@
  * @see \Magento\Payment\Block\Info
  */
 $config = $block->getLayout()->createBlock(\Magento\Config\Block\System\Config\Form::class);
-$url    = $config->getConfigValue('payment/myfatoorah_payment/is_testing') ? 'https://demo.myfatoorah.com/cardview/v1/session.js' : 'https://portal.myfatoorah.com/cardview/v1/session.js';
+
+$isTesting   = $config->getConfigValue('payment/myfatoorah_payment/is_testing');
+$countryCode = $config->getConfigValue('payment/myfatoorah_payment/countryMode');
+
+$scriptType    = $isTesting ? 'demo' : (($countryCode == 'SAU') ? 'sa' : 'portal');
+$formScriptURL = 'https://' . $scriptType . '.myfatoorah.com/cardview/v1/session.js';
+$apScriptURL   = 'https://' . $scriptType . '.myfatoorah.com/applepay/v2/applepay.js';
 ?>
 <script>
     require.config({
         map: {
             '*': {
-                'mfSessionFile': '<?php echo $url ?>'
+                'mfSessionFile': '<?=  $block->escapeHtml($formScriptURL); ?>',
+                'mfAppleFile': '<?=  $block->escapeHtml($apScriptURL); ?>'
+
             }
         }
     });

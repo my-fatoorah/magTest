@@ -9,14 +9,16 @@ use MyFatoorah\Library\PaymentMyfatoorahApiV2;
  * Values returned from Magento\Payment\Gateway\Config\Config.getValue()
  * are taken by default from ScopeInterface::SCOPE_STORE
  */
-class Config extends \Magento\Payment\Gateway\Config\Config {
+class Config extends \Magento\Payment\Gateway\Config\Config
+{
 
     const CODE                                 = 'myfatoorah_payment';
-    const PLUGIN_VERSION                       = '2.0.0';
+    const PLUGIN_VERSION                       = '2.1.0';
     const KEY_ACTIVE                           = 'active';
     const KEY_API_KEY                          = 'api_key';
     const KEY_GATEWAYS                         = 'list_options';
-    const KEY_Title                            = 'title';
+    const KEY_IS_APPLE_PAY_REGISTERED          = 'isApplePayRegistered';
+    const KEY_TITLE                            = 'title';
     const KEY_DEBUG                            = 'debug';
     const KEY_MYFATOORAH_APPROVED_ORDER_STATUS = 'myfatoorah_approved_order_status';
     const KEY_EMAIL_CUSTOMER                   = 'email_customer';
@@ -33,7 +35,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getLaunchTime() {
+    public function getLaunchTime()
+    {
         return $this->getValue(self::KEY_LAUNCH_TIME);
     }
 
@@ -42,7 +45,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getLaunchTimeUpdated() {
+    public function getLaunchTimeUpdated()
+    {
         return $this->getValue(self::KEY_LAUNCH_TIME_UPDATED);
     }
 
@@ -51,8 +55,9 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getTitle() {
-        return $this->getValue(self::KEY_Title);
+    public function getTitle()
+    {
+        return $this->getValue(self::KEY_TITLE);
     }
 
     /**
@@ -60,21 +65,22 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getLogo() {
-
-        $gateways = $this->getKeyGateways();
-        return (substr_count($gateways, ',') == 0) ? "$gateways.png" : 'myfatoorah.png';
-    }
+//    public function getLogo()
+//    {
+//
+//        $gateways = $this->getKeyGateways();
+//        return (substr_count($gateways, ',') == 0) ? "$gateways.png" : 'myfatoorah.png';
+//    }
 
     /**
      * Get Description
      *
      * @return string
      */
-    public function getDescription() {
+    public function getDescription()
+    {
         return '';
     }
-
     /**
      * Get Gateway URL
      *
@@ -83,10 +89,12 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
 
     /**
      * get the myfatoorah refund gateway Url
+     *
      * @return string
      */
-    public function getRefundUrl() {
-        return 'https://' . ( $this->isTesting() ? 'apitest.myfatoorah.com/v2/MakeRefund' : 'api.myfatoorah.com/v2/MakeRefund' );
+    public function getRefundUrl()
+    {
+        return ('https://' . ( $this->isTesting() ? 'apitest' : 'api' ) . '.myfatoorah.com/v2/MakeRefund');
     }
 
     /**
@@ -94,7 +102,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getApiKey() {
+    public function getApiKey()
+    {
         return $this->getValue(self::KEY_API_KEY);
     }
 
@@ -103,31 +112,38 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getMyFatoorahApprovedOrderStatus() {
+    public function getMyFatoorahApprovedOrderStatus()
+    {
         return $this->getValue(self::KEY_MYFATOORAH_APPROVED_ORDER_STATUS);
     }
 
     /**
      * Check if customer is to be notified
+     *
      * @return boolean
      */
-    public function isEmailCustomer() {
+    public function isEmailCustomer()
+    {
         return (bool) $this->getValue(self::KEY_EMAIL_CUSTOMER);
     }
 
     /**
      * Check if customer is to be notified
+     *
      * @return boolean
      */
-    public function isAutomaticInvoice() {
+    public function isAutomaticInvoice()
+    {
         return (bool) $this->getValue(self::KEY_AUTOMATIC_INVOICE);
     }
 
     /**
      * Get Payment configuration status
+     *
      * @return bool
      */
-    public function isActive() {
+    public function isActive()
+    {
         return (bool) $this->getValue(self::KEY_ACTIVE);
     }
 
@@ -136,7 +152,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return boolean
      */
-    public function isTesting() {
+    public function isTesting()
+    {
         return (bool) $this->getValue(self::KEY_IS_TESTING);
     }
 
@@ -145,7 +162,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return boolean
      */
-    public function getCounrtyMode() {
+    public function getCounrtyMode()
+    {
         return $this->getValue(self::KEY_COUNTRY_MODE);
     }
 
@@ -154,11 +172,13 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getVersion() {
+    public function getVersion()
+    {
         return self::PLUGIN_VERSION;
     }
 
-    public function getCode() {
+    public function getCode()
+    {
         return self::CODE;
     }
 
@@ -167,8 +187,19 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getKeyGateways() {
+    public function getKeyGateways()
+    {
         return $this->getValue(self::KEY_GATEWAYS);
+    }
+
+    /**
+     * Get isApplePayRegistered configuration status
+     *
+     * @return bool
+     */
+    public function isApplePayRegistered()
+    {
+        return (bool) $this->getValue(self::KEY_IS_APPLE_PAY_REGISTERED);
     }
 
     /**
@@ -176,7 +207,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getSaveCard() {
+    public function getSaveCard()
+    {
         return $this->getValue(self::KEY_TOKENIZATION);
     }
 
@@ -185,7 +217,8 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return boolean
      */
-    public function listInvoiceItems() {
+    public function listInvoiceItems()
+    {
         return (bool) $this->getValue(self::KEY_LISTINVOICEITEMS);
     }
 
@@ -194,12 +227,12 @@ class Config extends \Magento\Payment\Gateway\Config\Config {
      *
      * @return string
      */
-    public function getMyfatoorahObject() {
+    public function getMyfatoorahObject()
+    {
         $apiKey      = $this->getApiKey();
         $isTesting   = $this->isTesting();
         $countryMode = $this->getCounrtyMode();
 
         return new PaymentMyfatoorahApiV2($apiKey, $countryMode, $isTesting, MYFATOORAH_LOG_FILE);
     }
-
 }

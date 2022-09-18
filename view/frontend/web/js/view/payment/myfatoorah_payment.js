@@ -14,7 +14,9 @@ define(
                 component: 'MyFatoorah_Gateway/js/view/payment/method-renderer/myfatoorah_payment'
             }
         );
-        /** Add view logic here if needed */
+        /**
+    * Add view logic here if needed 
+    */
         return Component.extend({});
     }
 );

@@ -17,10 +17,10 @@ use Magento\Framework\Module\Manager;
 use MyFatoorah\Library\ShippingMyfatoorahApiV2;
 use MyFatoorah\Gateway\Helper\Checkout;
 
-class Shipping extends AbstractCarrier implements CarrierInterface {
+class Shipping extends AbstractCarrier implements CarrierInterface
+{
 
     /**
-
      * Carrier's code
      *
      * @var string
@@ -46,7 +46,7 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
     /**
      *
-     * @var ShippingMyfatoorahApiV2 
+     * @var ShippingMyfatoorahApiV2
      */
     private $sMFObj;
 
@@ -58,33 +58,34 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
     /**
      *
-     * @var checkoutHelper 
+     * @var checkoutHelper
      */
     protected $checkoutHelper;
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
+     *
      * @param StoreManagerInterface $storeManager
-     * @param ResultFactory $resultFactory
-     * @param MethodFactory $methodFactory
-     * @param ScopeConfigInterface $scopeConfig
-     * @param ErrorFactory $rateErrorFactory
-     * @param LoggerInterface $logger
-     * @param Checkout $checkoutHelper
-     * @param array $data
+     * @param ResultFactory         $resultFactory
+     * @param MethodFactory         $methodFactory
+     * @param ScopeConfigInterface  $scopeConfig
+     * @param ErrorFactory          $rateErrorFactory
+     * @param LoggerInterface       $logger
+     * @param Checkout              $checkoutHelper
+     * @param array                 $data
      */
     public function __construct(
-            Manager $moduleManager,
-            StoreManagerInterface $storeManager,
-            ResultFactory $resultFactory,
-            MethodFactory $methodFactory,
-            ScopeConfigInterface $scopeConfig,
-            ErrorFactory $rateErrorFactory,
-            LoggerInterface $logger,
-            Checkout $checkoutHelper,
-            array $data = array()) {
+        Manager $moduleManager,
+        StoreManagerInterface $storeManager,
+        ResultFactory $resultFactory,
+        MethodFactory $methodFactory,
+        ScopeConfigInterface $scopeConfig,
+        ErrorFactory $rateErrorFactory,
+        LoggerInterface $logger,
+        Checkout $checkoutHelper,
+        array $data = []
+    ) {
 
         //initiate the parent constructor
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
@@ -96,8 +97,7 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
         $this->rateMethodFactory = $methodFactory;
         $this->checkoutHelper    = $checkoutHelper;
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Generates list of allowed carrier`s shipping methods
@@ -106,25 +106,26 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
      * @return array
      * @api
      */
-    public function getAllowedMethods() {
+    public function getAllowedMethods()
+    {
         return [
             $this->getCarrierCode() => __('DHL'),
             $this->getCarrierCode() => __('Aramex')
         ];
     }
-
     //todo ned to fix the cart page
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Collect and get rates for storefront
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     * @param RateRequest $request
-     * @return DataObject|bool|null
+     * @param                                         RateRequest $request
+     * @return                                        DataObject|bool|null
      * @api
      */
-    public function collectRates(RateRequest $request) {
+    public function collectRates(RateRequest $request)
+    {
 
         $configData = $this->getMFPaymentConfigData();
 
@@ -133,10 +134,15 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
             return false;
         }
 
-        $this->sMFObj = new ShippingMyfatoorahApiV2($configData['apiKey'], $configData['countryMode'], $configData['isTesting'], MFSHIPPING_LOG_FILE);
+        $this->sMFObj = new ShippingMyfatoorahApiV2(
+            $configData['apiKey'],
+            $configData['countryMode'],
+            $configData['isTesting'],
+            MFSHIPPING_LOG_FILE
+        );
 
         //logging
-        $this->sMFObj->log("-----------------------------------------------------------------------------------------------------");
+        $this->sMFObj->log("---------------------------------------------------------------------------------------");
 
         try {
             $currency     = $this->storeManager->getStore()->getBaseCurrency()->getCode();
@@ -163,36 +169,26 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
                 $shippingAmount = $currencyRate * $realVal;
                 if ($shippingAmount) {
-                    $rateResult->append($this->createShippingMethod($shippingAmount, $id, $this->mfShippingMethods[$id]));
+                    $rateResult->append($this->createShippingMethod($shippingAmount, $id));
                 }
             }
 
             return $rateResult;
         } catch (\Exception $ex) {
             $this->sMFObj->log('In Shipping exception block - ' . $ex->getMessage());
-            return []; //$this->getError($ex->getMessage());
+            return [];
         }
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
-    private function getError($message) {
-        /* @var \Magento\Quote\Model\Quote\Address\RateResult\Error $error */
-        $error = $this->_rateErrorFactory->create();
-        $error->setCarrier($this->getCarrierCode());
-        $error->setCarrierTitle($this->getConfigData('title'));
-        $error->setErrorMessage($message);
-        return $error;
-    }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     *     
-     * @param RateRequest $request
+     *
+     * @param  RateRequest $request
      * @return type
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    private function getInvoiceItems($request) {
+    private function getInvoiceItems($request)
+    {
         $items = $request->getAllItems();
         try {
             $orderItemsArr = $this->checkoutHelper->getOrderItems($items, 1, true, false);
@@ -202,8 +198,9 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
         return $orderItemsArr['invoiceItemsArr'];
     }
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
-    private function createShippingMethod($shippingAmount, $id, $name) {
+    //-----------------------------------------------------------------------------------------------------------------------------------------
+    private function createShippingMethod($shippingAmount, $id)
+    {
 
         $method = $this->rateMethodFactory->create();
 
@@ -213,7 +210,7 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
         //Set method under Carrier
         $method->setMethod($id);
-        $method->setMethodTitle(__($name));
+        $method->setMethodTitle(__($this->mfShippingMethods[$id]));
 
         //set price
         $method->setPrice($shippingAmount);
@@ -221,36 +218,43 @@ class Shipping extends AbstractCarrier implements CarrierInterface {
 
         return $method;
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------    
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Retrieve information from carrier configuration
      *
-     * @param   string $field
-     * @return  false|string
+     * @return array
      */
-    private function getMFPaymentConfigData() {
-
-//        $store = $this->getStore();
+    private function getMFPaymentConfigData()
+    {
         $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
 
-        if ($this->moduleManager->isEnabled('MyFatoorah_Gateway') && $this->_scopeConfig->getValue('payment/myfatoorah_payment/active', $scope)) {
-            $path = 'payment/myfatoorah_payment/';
-        } else if ($this->moduleManager->isEnabled('MyFatoorah_MyFatoorahPaymentGateway') && $this->_scopeConfig->getValue('payment/myfatoorah_gateway/active', $scope)) {
-            $path = 'payment/myfatoorah_gateway/';
-        } else if ($this->moduleManager->isEnabled('MyFatoorah_EmbedPay') && $this->_scopeConfig->getValue('payment/embedpay/active', $scope)) {
-            $path = 'payment/embedpay/';
+        $module = $this->moduleManager;
+        $config = $this->_scopeConfig;
+
+        $mgPath = 'payment/myfatoorah_payment/';
+        $mmPath = 'payment/myfatoorah_gateway/';
+        $mePath = 'payment/embedpay/';
+        
+        $mgName = 'MyFatoorah_Gateway';
+        $mmName = 'MyFatoorah_MyFatoorahPaymentGateway';
+        $meName = 'MyFatoorah_EmbedPay';
+
+        if ($module->isEnabled($mgName) && $config->getValue($mgPath . 'active', $scope)) {
+            $path = $mgPath;
+        } elseif ($module->isEnabled($mmName) && $config->getValue($mmPath . 'active', $scope)) {
+            $path = $mmPath;
+        } elseif ($module->isEnabled($meName) && $config->getValue($mePath . 'active', $scope)) {
+            $path = $mePath;
         } else {
-            return false;
+            return [];
         }
 
-        $data['apiKey']      = $this->_scopeConfig->getValue($path . 'api_key', $scope);
-        $data['isTesting']   = $this->_scopeConfig->getValue($path . 'is_testing', $scope);
-        $data['countryMode'] = $this->_scopeConfig->getValue($path . 'countryMode', $scope);
+        $data['apiKey']      = $config->getValue($path . 'api_key', $scope);
+        $data['isTesting']   = $config->getValue($path . 'is_testing', $scope);
+        $data['countryMode'] = $config->getValue($path . 'countryMode', $scope);
 
         return $data;
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 }

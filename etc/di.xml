@@ -26,7 +26,7 @@
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="initialize" xsi:type="string">MyFatoorahPaymentInitializeCommand</item>
-                <item name="refund" xsi:type="string">MyFatoorahPaymentRefundCommand</item>
+                <!--<item name="refund" xsi:type="string">MyFatoorahPaymentRefundCommand</item>-->
             </argument>
         </arguments>
     </virtualType>
@@ -41,14 +41,14 @@
     </virtualType>
 
     <!-- Refund command -->
-    <virtualType name="MyFatoorahPaymentRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+<!--    <virtualType name="MyFatoorahPaymentRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
         <arguments>
             <argument name="requestBuilder" xsi:type="object">MyFatoorahPaymentRefundRequest</argument>
-            <argument name="transferFactory" xsi:type="object">MyFatoorah\Gateway\Gateway\Http\DummyTransferFactory</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR!Cannot instantiate interface Magento\Payment\Gateway\Http\TransferFactoryInterface if empty -->
+            <argument name="transferFactory" xsi:type="object">MyFatoorah\Gateway\Gateway\Http\DummyTransferFactory</argument>  [Payment/Model/Method/Adapter][executeCommand]ERROR!Cannot instantiate interface Magento\Payment\Gateway\Http\TransferFactoryInterface if empty 
             <argument name="handler" xsi:type="object">MyFatoorah\Gateway\Model\MyFatoorahPayment</argument>
-            <argument name="client" xsi:type="object">MyFatoorah\Gateway\Gateway\Http\Client\RefundClient</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR getting command!Cannot instantiate interface Magento\Payment\Gateway\Http\ClientInterface if empty-->
+            <argument name="client" xsi:type="object">MyFatoorah\Gateway\Gateway\Http\Client\RefundClient</argument>  [Payment/Model/Method/Adapter][executeCommand]ERROR getting command!Cannot instantiate interface Magento\Payment\Gateway\Http\ClientInterface if empty
         </arguments>
-    </virtualType>
+    </virtualType>-->
 
     <!-- Initialization Request -->
     <virtualType name="MyFatoorahPaymentInitializationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">

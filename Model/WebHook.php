@@ -8,18 +8,19 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Sales\Model\Order;
 use MyFatoorah\Library\PaymentMyfatoorahApiV2;
 
-class WebHook {
+class WebHook
+{
 
     private $scopeStore = ScopeInterface::SCOPE_STORE;
     private $scopeConfig;
     private $successObj;
     private $orderModel;
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
     public function __construct(
-            ScopeConfigInterface $scopeConfig,
-            Success $successObj,
-            Order $orderModel
+        ScopeConfigInterface $scopeConfig,
+        Success $successObj,
+        Order $orderModel
     ) {
 
         $this->scopeConfig = $scopeConfig;
@@ -27,33 +28,38 @@ class WebHook {
         $this->successObj = $successObj;
         $this->orderModel = $orderModel;
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------    
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * {@inheritdoc}
      */
-    public function execute($EventType, $Event, $DateTime, $CountryIsoCode, $Data) {
+    public function execute($EventType, $Event, $DateTime, $CountryIsoCode, $Data)
+    {
 
-        //to allow the callback code run 1st. 
+        //to allow the callback code run 1st.
+        // phpcs:ignore Magento2.Functions.DiscouragedFunction
         sleep(30);
 
         if ($EventType != 1) {
             return;
         }
 
-        $this->TransactionsStatusChanged($Data);
+        $error = $this->transactionsStatusChanged($Data);
+        if ($error) {
+            error_log(PHP_EOL . date('d.m.Y h:i:s') . ' - ' . $ex->getMessage(), 3, MYFATOORAH_LOG_FILE);
+        }
     }
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
-    function TransactionsStatusChanged($data) {
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    private function transactionsStatusChanged($data)
+    {
 
         $orderId = $data['CustomerReference'];
         try {
             //get the order to get its store
             $order = $this->orderModel->loadByIncrementId($orderId);
             if (!$order->getId()) {
-                throw new \Exception('MyFatoorah returned an order that could not be retrieved');
+                return 'MyFatoorah returned an order that could not be retrieved';
             }
 
             //get the order store config
@@ -84,11 +90,11 @@ class WebHook {
             }
 
             //update order status
-            $this->successObj->checkStatus($data['InvoiceId'], 'InvoiceId', $mfObj, '-WebHook', $order->getRealOrderId());
+            $this->successObj->checkStatus($data['InvoiceId'], 'InvoiceId', $mfObj, '-WebHook', $orderId);
+            return '';
         } catch (\Exception $ex) {
-            error_log(PHP_EOL . date('d.m.Y h:i:s') . ' - ' . $ex->getMessage(), 3, MYFATOORAH_LOG_FILE);
+            return $ex->getMessage();
         }
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 }

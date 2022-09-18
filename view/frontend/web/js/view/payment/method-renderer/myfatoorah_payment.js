@@ -1,37 +1,40 @@
 /*browser:true*/
 /*global define*/
 define(
-        [
+    [
             'mfSessionFile', // here the session.js file is mapped
+            'mfAppleFile', // here the session.js file is mapped
             'jquery',
             'Magento_Checkout/js/view/payment/default',
             'Magento_Checkout/js/model/quote',
             'mage/url'
         ],
-        function (
-                mfSessionFile,
-                $,
-                Component,
-                quote,
-                url
-                ) {
-            'use strict';
-            var self;
+    function (
+        mfSessionFile,
+        mfAppleFile,
+        $,
+        Component,
+        quote,
+        url
+    ) {
+        'use strict';
+        var self;
 
-            var urlCode = 'myfatoorah_payment';
-            var checkoutConfig = window.checkoutConfig.payment.myfatoorah_payment;
+        var urlCode = 'myfatoorah_payment';
+        var checkoutConfig = window.checkoutConfig.payment.myfatoorah_payment;
 
-            var mfData = 'pm=myfatoorah';
+        var mfData = 'pm=myfatoorah';
 
-            var paymentMethods = checkoutConfig.paymentMethods;
-            var listOptions = checkoutConfig.listOptions;
-            var mfLang = checkoutConfig.lang;
+        var paymentMethods = checkoutConfig.paymentMethods;
+        var listOptions = checkoutConfig.listOptions;
+        var mfLang = checkoutConfig.lang;
 
-            var mfError = checkoutConfig.mfError;
+        var mfError = checkoutConfig.mfError;
 
-            var baseGrandTotal = checkoutConfig.baseGrandTotal;
+        var baseGrandTotal = checkoutConfig.baseGrandTotal;
 
-            return Component.extend({
+        return Component.extend(
+            {
                 redirectAfterPlaceOrder: false,
                 defaults: {
                     template: 'MyFatoorah_Gateway/payment/form'
@@ -42,12 +45,14 @@ define(
                 },
                 initObservable: function () {
                     this._super()
-                            .observe([
-                                'gateways',
-                                'transactionResult'
-                            ]);
+                    .observe(
+                        [
+                        'gateways',
+                        'transactionResult'
+                            ]
+                    );
 
-                    return this;
+                        return this;
 
                 },
                 getCode: function () {
@@ -102,15 +107,21 @@ define(
                     }
 
                     myFatoorah.submit()
-                            .then(function (response) {// On success
-                                mfData = 'sid=' + response.SessionId;
-                                self.placeOrder();
-                            }, function (error) { // In case of errors
+                    .then(
+                        function (response) {
+                            // On success
+                            mfData = 'sid=' + response.SessionId;
+                            self.placeOrder();
+                        }, function (error) {
+                                // In case of errors
                                 $('body').loader('hide');
-                                self.messageContainer.addErrorMessage({
-                                    message: error
-                                });
-                            });
+                                self.messageContainer.addErrorMessage(
+                                    {
+                                        message: error
+                                        }
+                                );
+                        }
+                    );
                 },
                 paymentMethods: paymentMethods,
                 getCardPaymentMethods: function () {
@@ -121,41 +132,49 @@ define(
                         return paymentMethods['cards'];
                     }
 
-                    $.ajax({
-                        showLoader: true,
-                        url: url.build(urlCode + '/checkout/payment'),
-                        async: false,
-                        cache: false,
-                        data: {
-                            ajax: 1,
-                            baseGrandTotal: baseGrandTotalNew
-                        },
-                        type: "POST",
-                        dataType: 'json'
-                    }).done(function (data) {
+                    $.ajax(
+                        {
+                            showLoader: true,
+                            url: url.build(urlCode + '/checkout/payment'),
+                            async: false,
+                            cache: false,
+                            data: {
+                                ajax: 1,
+                                baseGrandTotal: baseGrandTotalNew
+                            },
+                            type: "POST",
+                            dataType: 'json'
+                            }
+                    ).done(
+                        function (data) {
 
-                        if (data.error === null) {
-                            paymentMethods['cards'] = $.parseJSON(data.cards);
-                            baseGrandTotal = baseGrandTotalNew;
-                        } else {
-                            self.messageContainer.addErrorMessage({
-                                message: data.error
-                            });
-                            $("#mfSubmitPayment").attr("disabled", "disabled");
+                            if (data.error === null) {
+                                paymentMethods['cards'] = $.parseJSON(data.cards);
+                                baseGrandTotal = baseGrandTotalNew;
+                            } else {
+                                self.messageContainer.addErrorMessage(
+                                    {
+                                        message: data.error
+                                        }
+                                );
+                                $("#mfSubmitPayment").attr("disabled", "disabled");
+                            }
+
+                            return paymentMethods['cards'];
                         }
-
-                        return paymentMethods['cards'];
-                    });
+                    );
 
                 },
                 isSectionVisible: function (section) {
-                    return (paymentMethods[section].length > 0);
+                    return !jQuery.isEmptyObject(paymentMethods[section]);
                 },
                 isContainerVisible: function () {
                     if (mfError) {
-                        self.messageContainer.addErrorMessage({
-                            message: mfError
-                        });
+                        self.messageContainer.addErrorMessage(
+                            {
+                                message: mfError
+                                }
+                        );
                         $("#mfSubmitPayment").attr("disabled", "disabled");
                         return false;
                     }
@@ -164,7 +183,7 @@ define(
                         return false;
                     }
 
-                    if (paymentMethods.cards.length === 1 && paymentMethods.form.length === 0) {
+                    if (paymentMethods.cards.length === 1 && paymentMethods.all.length === 1) {
                         return false;
                     }
 
@@ -193,10 +212,10 @@ define(
                                 borderRadius: "0px",
                                 boxShadow: "",
                                 placeHolder: {
-                                    holderName: $.mage.translate.add('Name On Card"'),
+                                    holderName: $.mage.translate.add('Name On Card'),
                                     cardNumber: $.mage.translate.add('Number'),
                                     expiryDate: $.mage.translate.add('MM / YY'),
-                                    securityCode: $.mage.translate.add('CVV'),
+                                    securityCode: $.mage.translate.add('CVV')
                                 }
                             },
                             label: {
@@ -220,7 +239,32 @@ define(
                     };
                     myFatoorah.init(mfConfig);
                     window.addEventListener("message", myFatoorah.recievedMessage, false);
+                },
+                getApple: function () {
+                    
+                    var mfApConfig = {
+                        sessionId: checkoutConfig.sessionId,
+                        countryCode: checkoutConfig.countryCode,
+                        currencyCode: paymentMethods['ap']['GatewayData']['GatewayCurrency'],
+                        amount: paymentMethods['ap']['GatewayData']['GatewayTotalAmount'],
+                        cardViewId: "ap-card-element",
+                        callback: mfApPayment
+                    };
+
+                    myFatoorahAP.init(mfApConfig);
+                        //                    window.addEventListener("message", myFatoorahAP.recievedMessage, false);
+
+                    function mfApPayment(response)
+                    {
+                        if (mfError) {
+                            return false;
+                        }
+                        $('body').loader('show');
+                        mfData = 'sid=' + response.sessionId;
+                        self.placeOrder();
+                    }
                 }
-            });
-        }
+            }
+        );
+    }
 );

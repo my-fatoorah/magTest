@@ -16,7 +16,8 @@ use Magento\Store\Model\StoreManagerInterface;
  *
  * Provides helper methods for retrieving data for the myfatoorah plugin
  */
-class Data extends AbstractHelper {
+class Data extends AbstractHelper
+{
 
     /**
      * @var \MyFatoorah\Gateway\Gateway\Config\Config
@@ -49,20 +50,20 @@ class Data extends AbstractHelper {
     protected $_localeResolver;
 
     /**
-     * @param \MyFatoorah\Gateway\Gateway\Config\Config $gatewayConfig
-     * @param \Magento\Framework\ObjectManagerInterface $objectManager
-     * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Payment\Helper\Data $paymentData
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager ,
+     * @param \MyFatoorah\Gateway\Gateway\Config\Config   $gatewayConfig
+     * @param \Magento\Framework\ObjectManagerInterface   $objectManager
+     * @param \Magento\Framework\App\Helper\Context       $context
+     * @param \Magento\Payment\Helper\Data                $paymentData
+     * @param \Magento\Store\Model\StoreManagerInterface  $storeManager   ,
      * @param \Magento\Framework\Locale\ResolverInterface $localeResolver
      */
     public function __construct(
-            Config $gatewayConfig,
-            ObjectManagerInterface $objectManager,
-            Context $context,
-            PaymentData $paymentData,
-            StoreManagerInterface $storeManager,
-            ResolverInterface $localeResolver
+        Config $gatewayConfig,
+        ObjectManagerInterface $objectManager,
+        Context $context,
+        PaymentData $paymentData,
+        StoreManagerInterface $storeManager,
+        ResolverInterface $localeResolver
     ) {
         $this->_gatewayConfig  = $gatewayConfig;
         $this->_objectManager  = $objectManager;
@@ -78,63 +79,75 @@ class Data extends AbstractHelper {
     /**
      * Creates an Instance of the Helper
      *
-     * @param  \Magento\Framework\ObjectManagerInterface $objectManager
+     * @param \Magento\Framework\ObjectManagerInterface $objectManager
      *
      * @return \MyFatoorah\Gateway\Helper\Data
      */
-    public static function getInstance($objectManager) {
-        return $objectManager->create(
-                        get_class()
-        );
-    }
+//    public static function getInstance($objectManager)
+//    {
+//        return $objectManager->create(
+//            get_class()
+//        );
+//    }
 
-    protected function getGatewayConfig() {
+    protected function getGatewayConfig()
+    {
         return $this->_gatewayConfig;
     }
 
     /**
      * Get an Instance of the Magento Object Manager
+     *
      * @return \Magento\Framework\ObjectManagerInterface
      */
-    protected function getObjectManager() {
+    protected function getObjectManager()
+    {
         return $this->_objectManager;
     }
 
     /**
      * Get an Instance of the Magento Store Manager
+     *
      * @return \Magento\Store\Model\StoreManagerInterface
      */
-    protected function getStoreManager() {
+    protected function getStoreManager()
+    {
         return $this->_storeManager;
     }
 
     /**
      * Get an Instance of the Magento UrlBuilder
+     *
      * @return \Magento\Framework\UrlInterface
      */
-    public function getUrlBuilder() {
+    public function getUrlBuilder()
+    {
         return $this->_urlBuilder;
     }
 
     /**
      * Get an Instance of the Magento Scope Config
+     *
      * @return \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected function getScopeConfig() {
+    protected function getScopeConfig()
+    {
         return $this->_scopeConfig;
     }
 
     /**
      * Get an Instance of the Magento Core Locale Object
+     *
      * @return \Magento\Framework\Locale\ResolverInterface
      */
-    protected function getLocaleResolver() {
+    protected function getLocaleResolver()
+    {
         return $this->_localeResolver;
     }
-
     /**
      * getCheckoutUrl()
      * get the URL of the configured myfatoorah gateway checkout
+     *
      * @return string
      */
 
@@ -142,11 +155,13 @@ class Data extends AbstractHelper {
      * @throws NoSuchEntityException If given store doesn't exist.
      * @return string
      */
-    public function getCompleteUrl() {
+    public function getCompleteUrl()
+    {
         return $this->getStoreManager()->getStore()->getBaseUrl() . 'myfatoorah_payment/checkout/success';
     }
 
-    public function getProcessUrl() {
+    public function getProcessUrl()
+    {
         return $this->getStoreManager()->getStore()->getBaseUrl() . 'myfatoorah_payment/checkout/process';
     }
 
@@ -156,17 +171,20 @@ class Data extends AbstractHelper {
      * @throws NoSuchEntityException If given store doesn't exist.
      * @return string
      */
-    public function getCancelledUrl($orderId, $error = null) {
-        return $this->getStoreManager()->getStore()->getBaseUrl() . "myfatoorah_payment/checkout/cancel?orderId=$orderId&error=$error";
+    public function getCancelledUrl($orderId, $error = null)
+    {
+        return $this->getStoreManager()->getStore()->getBaseUrl()
+            . "myfatoorah_payment/checkout/cancel?orderId=$orderId&error=$error";
     }
 
     /**
      * Get Store code
+     *
      * @throws NoSuchEntityException If given store doesn't exist.
      * @return string
      */
-    public function getStoreCode() {
+    public function getStoreCode()
+    {
         return $this->getStoreManager()->getStore()->getCode();
     }
-
 }

@@ -5,7 +5,8 @@ namespace MyFatoorah\Gateway\Gateway\Http\Client;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
 
-class RefundClient implements ClientInterface {
+class RefundClient implements ClientInterface
+{
 
     /**
      * This is the place where requests to the Payment Gateway API are placed.
@@ -22,10 +23,10 @@ class RefundClient implements ClientInterface {
      *
      * @return array
      */
-    public function placeRequest(TransferInterface $transferObject) {
+    public function placeRequest(TransferInterface $transferObject)
+    {
         $response = $transferObject->getBody();
 
         return $response;
     }
-
 }

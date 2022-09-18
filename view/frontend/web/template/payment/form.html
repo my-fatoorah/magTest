@@ -1,7 +1,7 @@
 <!--
-MyFatoorah version 2.0.0
+MyFatoorah version 2.1.0
 -->
-<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}" mfVersion="2.0.0">
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}" data-mfVersion="2.1.0">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"
@@ -30,7 +30,11 @@ MyFatoorah version 2.0.0
             <div class="mf-payment-methods-container">
                 <p class="mf-grey-text"><!-- ko i18n: 'How would you like to pay?' --><!-- /ko --></p>
 
-
+                <!-- ko if: isSectionVisible('ap') -->
+                <div id="ap-card-element" style="height: 50px; margin-top: 5px;"></div>
+                <input type="hidden" data-bind="value: getApple()">
+                <!-- /ko -->
+                
                 <!-- ko if: isSectionVisible('cards') -->
                 <div class="mf-divider"><!-- ko i18n: 'Pay With' --><!-- /ko --></div>
 
@@ -47,7 +51,6 @@ MyFatoorah version 2.0.0
                     </div>
                     <!-- /ko -->
                 </div>
-                <!--                <input type="hidden" data-bind="value: getCardPaymentMethods()">-->
                 <!-- /ko -->
 
                 <!-- ko if: isSectionVisible('form') -->
@@ -67,7 +70,7 @@ MyFatoorah version 2.0.0
             </div>
         </div>
 
-        <div class="actions-toolbar">
+        <div class="actions-toolbar" data-bind="if: !isContainerVisible() || isSectionVisible('form')">
             <div class="primary">
                 <button class="action primary checkout"
                         type="submit"

@@ -1,13 +1,14 @@
 {
     "name": "myfatoorah/magento2-gateway",
-    "description": "MyFatoorah is a flexible and open-source payment gateway for Magento2. Sell anything, anywhere, and make your way.",
-    "version": "2.0.0",
+    "description": "The official MyFatoorah Payment Gateway for Magento2.",
+    "version": "2.1.0",
     "type": "magento2-module",
     "license": [
         "GPL-3.0-only"
     ],
     "require": {
-        "myfatoorah/library": "2.0.0"
+        "myfatoorah/library": "~2.1.0",
+        "magento/framework": "*"
     },
     "autoload": {
         "files": ["registration.php"],
@@ -15,10 +16,22 @@
             "MyFatoorah\\Gateway\\": ""
         }
     },
+    "keywords": [
+        "MyFatoorah",
+        "My Fatoorah",
+        "Fatoorah",
+        "gateway",
+        "payment",
+        "Shipping",
+        "api",
+        "commerce",
+        "Magento2"
+    ],
     "homepage": "https://myfatoorah.com/",
     "authors": [
         {
-            "name": "MyFatoorah Plugin Team"
+            "name": "MyFatoorah Plugin Team",
+            "email": "plugins@myfatoorah.com"
         },
         {
             "name": "Nermeen Shoman",

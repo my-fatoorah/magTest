@@ -5,27 +5,28 @@ namespace MyFatoorah\Gateway\Model\Config\Source;
 use MyFatoorah\Library\MyfatoorahApiV2;
 use Magento\Framework\Locale\Resolver;
 
-class VendorCountry implements \Magento\Framework\Option\ArrayInterface {
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+class VendorCountry implements \Magento\Framework\Option\ArrayInterface
+{
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * @var Resolver
      */
     private $localeResolver;
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
     public function __construct(
-            Resolver $localeResolver
+        Resolver $localeResolver
     ) {
         $this->localeResolver = $localeResolver;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * {@inheritdoc}
      */
-    public function toOptionArray() {
+    public function toOptionArray()
+    {
         $options = [];
 
         $countries = MyfatoorahApiV2::getMyFatoorahCountries();
@@ -40,12 +41,12 @@ class VendorCountry implements \Magento\Framework\Option\ArrayInterface {
         return $options;
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    private function getCurrentLocale() {
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    private function getCurrentLocale()
+    {
         $currentLocaleCode = $this->localeResolver->getLocale(); // fr_CA
         $languageCode      = strstr($currentLocaleCode, '_', true);
         return $languageCode;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------    
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

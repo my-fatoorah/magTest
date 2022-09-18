@@ -10,23 +10,38 @@ use MyFatoorah\Gateway\Model\ResourceModel\MyfatoorahInvoice\CollectionFactory;
 use MyFatoorah\Gateway\Gateway\Config\Config;
 
 /**
- * Class Info
+ * Displays the MyFatoorah order information in the admin panel
  */
-class Info extends ConfigurableInfo {
+class Info extends ConfigurableInfo
+{
 
     /**
+     * Template path
+     *
      * @var string
      */
     protected $_template = 'info/default.phtml';
+
+    /**
+     * MyFatoorah invoice information object
+     *
+     * @var CollectionFactory
+     */
     protected $mfInvoiceFactory;
+
+    /**
+     * MyFatoorah Config Data
+     *
+     * @var Config
+     */
     protected $gatewayConfig;
 
     public function __construct(
-            CollectionFactory $mfInvoiceFactory,
-            Config $mfconfig,
-            Context $context,
-            ConfigInterface $config,
-            array $data = []
+        CollectionFactory $mfInvoiceFactory,
+        Config $mfconfig,
+        Context $context,
+        ConfigInterface $config,
+        array $data = []
     ) {
         parent::__construct($context, $config, $data);
         $this->mfInvoiceFactory = $mfInvoiceFactory;
@@ -40,12 +55,14 @@ class Info extends ConfigurableInfo {
      *
      * @return Phrase
      */
-    protected function getLabel($field) {
+    protected function getLabel($field)
+    {
         return __($field);
     }
 
     //for emails
-    public function getSpecificInformation() {
+    public function getSpecificInformation()
+    {
 
         $item = $this->getInvoiceData();
         if ($item) {
@@ -76,41 +93,42 @@ class Info extends ConfigurableInfo {
     }
 
     //for Admin and user
-    public function getMFInformation() {
+    public function getMFInformation()
+    {
 
         $item = $this->getInvoiceData();
         if ($item) {
-            $data['Invoice ID'] = (isset($item['invoice_url'])) ? '<a href="' . $item['invoice_url'] . '">' . $item['invoice_id'] . '</a>' : $item['invoice_id'];
+            $payment['invoice']['id']  = $item['invoice_id'];
+            $payment['invoice']['url'] = $item['invoice_url'];
 
             if (isset($item['invoice_reference'])) {
-                $data['Invoice Ref.'] = $item['invoice_reference'];
+                $payment['info']['Invoice Ref.'] = $item['invoice_reference'];
             }
 
-            $data['Gateway'] = $item['gateway_name'];
+            $payment['info']['Gateway'] = $item['gateway_name'];
 
             if (isset($item['reference_id'])) {
-                $data['Trans. Ref. ID'] = $item['reference_id'];
+                $payment['info']['Trans. Ref. ID'] = $item['reference_id'];
             }
             if (isset($item['track_id'])) {
-                $data['Track ID'] = $item['track_id'];
+                $payment['info']['Track ID'] = $item['track_id'];
             }
             if (isset($item['authorization_id'])) {
-                $data['Auth. ID'] = $item['authorization_id'];
+                $payment['info']['Auth. ID'] = $item['authorization_id'];
             }
             if (isset($item['gateway_transaction_id'])) {
-                $data['Trans. ID'] = $item['gateway_transaction_id'];
+                $payment['info']['Trans. ID'] = $item['gateway_transaction_id'];
             }
             if (isset($item['payment_id'])) {
-                $data['Payment ID'] = $item['payment_id'];
+                $payment['info']['Payment ID'] = $item['payment_id'];
             }
 
-
-
-            return $data;
+            return $payment;
         }
     }
 
-    public function getInvoiceData() {
+    public function getInvoiceData()
+    {
 
         $mfOrder = $this->getInfo()->getOrder();
         $orderId = $mfOrder->getRealOrderId();
@@ -125,5 +143,4 @@ class Info extends ConfigurableInfo {
             return $items[0];
         }
     }
-
 }

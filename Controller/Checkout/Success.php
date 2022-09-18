@@ -3,85 +3,104 @@
 namespace MyFatoorah\Gateway\Controller\Checkout;
 
 use Magento\Sales\Model\Order;
+use Exception as MFException;
+use Magento\Sales\Model\Order\Email\Sender\OrderSender;
+use Magento\Sales\Model\Service\InvoiceService;
+use Magento\CatalogInventory\Api\StockManagementInterface;
 
-class Success extends AbstractAction {
+class Success extends AbstractAction
+{
 
     private $isAddHistory = false;
 
-    public function execute() {
+    public function execute()
+    {
 
-        try {
-            $paymentId = $this->getRequest()->get('paymentId');
-            if (!$paymentId) {
-                throw new \Exception('MyFatoorah returned a null payment id. This may indicate an issue with the myfatoorah payment gateway.');
-            }
-
-            $error = $this->checkStatus($paymentId, 'paymentId', $this->mfObj);
-            if (!$error) {
-                //redirect to success page
-                $this->getMessageManager()->addSuccessMessage(__('Your payment is complete'));
-                $this->_redirect('checkout/onepage/success', array('_secure' => false));
-                return;
-            }
-        } catch (\Exception $ex) {
-            $error = $ex->getMessage();
-            $this->mfObj->log('In Exception Block: ' . $error);
-            //$this->mfObj->log('In Exception Block: ' . $ex->getTraceAsString());
+        $error = $this->validateMFData();
+        if (!$error) {
+            //redirect to success page
+            $this->getMessageManager()->addSuccessMessage(__('Your payment is complete'));
+            $this->_redirect('checkout/onepage/success', ['_secure' => false]);
+            return;
         }
+
         //restore cart
         $this->getCheckoutHelper()->restoreQuote();
 
         //redirect to cancel page
         $this->getMessageManager()->addErrorMessage($error);
-        $this->_redirect('checkout/cart', array('_secure' => false));
+        $this->_redirect('checkout/cart', ['_secure' => false]);
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    public function checkStatus($keyId, $KeyType, $mfObj, $source = '', $escape = false, $orderId = null) {
+    private function validateMFData()
+    {
+        $paymentId = $this->getRequest()->get('paymentId');
+        if (!$paymentId) {
+            return 'Order not found.';
+        }
+
+        try {
+            return $this->checkStatus($paymentId, 'paymentId', $this->mfObj);
+        } catch (Exception $ex) {
+            $error = $ex->getMessage();
+            $this->mfObj->log('In Exception Block: ' . $error);
+            return $error;
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    public function checkStatus($keyId, $KeyType, $mfObj, $source = '', $escape = false, $orderId = null)
+    {
 
         //check for the invoice or payment id
         $data = $mfObj->getPaymentStatus($keyId, $KeyType, $orderId);
 
         //get the order
-        /** @var Order $order */
+        /**
+         * @var Order $order
+         */
         $order = $this->getOrderById($data->CustomerReference);
         if (!$order) {
-            throw new \Exception("MyFatoorah returned an id: $data->CustomerReference for an order that could not be retrieved");
+            throw new MFException('Order not found.');
         }
 
         //order is not pending or canceled
-        if (!$escape && $order->getState() !== Order::STATE_PENDING_PAYMENT && $order->getState() !== Order::STATE_CANCELED) {
+        $status = $order->getState();
+        if (!$escape && $status !== Order::STATE_PENDING_PAYMENT && $status !== Order::STATE_CANCELED) {
             return false;
         }
 
-
         $message = "MyFatoorah$source: $data->InvoiceStatus Payment. ";
-        $message .= isset($data->focusTransaction) ? 'Payment Id #' . $data->focusTransaction->PaymentId . '. Gateway used is ' . $data->focusTransaction->PaymentGateway . '. ' : '';
+        if (isset($data->focusTransaction)) {
+            $paymentId      = $data->focusTransaction->PaymentId;
+            $paymentGateway = $data->focusTransaction->PaymentGateway;
+
+            $message .= 'Payment Id #' . $paymentId . '. Gateway used is ' . $paymentGateway . '. ';
+        }
 
         if ($data->InvoiceStatus == 'Paid') {
             $this->savePaymentData($data);
             $this->processPaidPayment($order, $data->InvoiceId, $message);
-        } else if ($data->InvoiceStatus == 'Failed') {
+        } elseif ($data->InvoiceStatus == 'Failed') {
             $this->savePaymentData($data);
             $this->processCancelPayment($order, $message . 'Gateway error is ' . $data->InvoiceError);
-        } else if ($data->InvoiceStatus == 'Expired') {
+        } elseif ($data->InvoiceStatus == 'Expired') {
             $this->processCancelPayment($order, $message . $data->InvoiceError);
         }
 
         return $data->InvoiceError;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
-     * @param object $data
+     * @param  object $data
      * @return void
      */
-    private function savePaymentData($data) {
+    private function savePaymentData($data)
+    {
 
         $orderId = $data->CustomerReference;
-        //save the invoice id in myfatoorah_invoice table 
+        //save the invoice id in myfatoorah_invoice table
         //see this sol: https://stackoverflow.com/questions/12570752/how-do-i-select-a-single-row-in-magento-in-a-custom-database-for-display-in-a-bl
         //$collection = Mage::getModel('brands/brands')->getCollection();
 
@@ -90,7 +109,10 @@ class Success extends AbstractAction {
         $itemData   = $item->getData();
 
         if (empty($itemData['invoice_id'])) {
-            $this->mfObj->log("Order #$orderId ----- Get Payment Status - can not save transaction information into database due to pending payment or worng order id");
+            $this->mfObj->log(
+                'Order #' . $orderId . ' ----- Get Payment Status - '
+                . 'can not save transaction information into database due to pending payment or worng order id'
+            );
             return;
         }
 
@@ -112,19 +134,17 @@ class Success extends AbstractAction {
             $this->isAddHistory = true;
         }
 
-
         $item->save();
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
      * @param \Magento\Sales\Model\Order $order
-     * @param string $invoiceId
-     * @param string $message
+     * @param string                     $invoiceId
+     * @param string                     $message
      */
-    private function processPaidPayment($order, $invoiceId, $message) {
+    private function processPaidPayment($order, $invoiceId, $message)
+    {
         if ($order->isCanceled()) {
             $this->unCancelorder($order, "MyFatoorah: remove the cancel status");
         }
@@ -135,16 +155,16 @@ class Success extends AbstractAction {
         }
         if ($order->isCanceled()) {
             $order->setState(Order::STATE_HOLDED)
-                    ->setStatus(Order::STATE_HOLDED)
-                    ->addStatusHistoryComment($message);
+                ->setStatus(Order::STATE_HOLDED)
+                ->addStatusHistoryComment($message);
             $order->save();
             // $order->hold()->save();
         } else {
             //set order status
             $order->setState(Order::STATE_PROCESSING)
-                    ->setStatus($orderStatus)
-                    ->addStatusHistoryComment($message)
-                    ->setIsCustomerNotified($this->getGatewayConfig()->isEmailCustomer());
+                ->setStatus($orderStatus)
+                ->addStatusHistoryComment($message)
+                ->setIsCustomerNotified($this->getGatewayConfig()->isEmailCustomer());
             $order->save();
 
             //set payment
@@ -158,39 +178,37 @@ class Success extends AbstractAction {
             }
 
             //send email
-            $emailSender = $this->getObjectManager()->create('\Magento\Sales\Model\Order\Email\Sender\OrderSender');
+            $emailSender = $this->getObjectManager()->create(OrderSender::class);
             $emailSender->send($order);
         }
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
      * @param \Magento\Sales\Model\Order $order
-     * @param string $message
+     * @param string                     $message
      */
-    private function processCancelPayment($order, $message) {
+    private function processCancelPayment($order, $message)
+    {
 
         if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
             $order->registerCancellation($message)->save();
-        } else if ($this->isAddHistory) {
+        } elseif ($this->isAddHistory) {
             $order->addStatusHistoryComment($message)->save();
         }
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
-     * @param type $orderStatus
+     * @param  type $orderStatus
      * @return boolean
      */
-    private function isStatusExists($orderStatus) {
+    private function isStatusExists($orderStatus)
+    {
         $statuses = $this->getObjectManager()
-                ->get('Magento\Sales\Model\Order\Status')
-                ->getResourceCollection()
-                ->getData();
+            ->get(\Magento\Sales\Model\Order\Status::class)
+            ->getResourceCollection()
+            ->getData();
 
         foreach ($statuses as $status) {
             if ($orderStatus === $status['status']) {
@@ -200,15 +218,14 @@ class Success extends AbstractAction {
 
         return false;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 
      * @param \Magento\Sales\Model\Order $order
-     * @param string $invoiceId
+     * @param string                     $invoiceId
      */
-    private function createMagentoInvoice($order, $invoiceId) {
+    private function createMagentoInvoice($order, $invoiceId)
+    {
         $orderId = $order->getRealOrderId();
 
         $msgLog = "Order #$orderId ----- Get Payment Status";
@@ -216,7 +233,7 @@ class Success extends AbstractAction {
         $this->mfObj->log("$msgLog - In Create Invoice");
         if ($order->canInvoice()) {
 
-            $invoice = $this->getObjectManager()->create('Magento\Sales\Model\Service\InvoiceService')->prepareInvoice($order);
+            $invoice = $this->getObjectManager()->create(InvoiceService::class)->prepareInvoice($order);
             if ($invoice->getTotalQty()) {
                 $this->mfObj->log("$msgLog - Can create an invoice.");
             } else {
@@ -225,16 +242,19 @@ class Success extends AbstractAction {
 
             /*
              * Look Magento/Sales/Model/Order/Invoice.register() for CAPTURE_OFFLINE explanation.
-             * Basically, if !config/can_capture and config/is_gateway and CAPTURE_OFFLINE and 
+             * Basically, if
+             * !config/can_capture and
+             * config/is_gateway and
+             * CAPTURE_OFFLINE and
              * Payment.IsTransactionPending => pay (Invoice.STATE = STATE_PAID...)
              */
             $invoice->setTransactionId($invoiceId);
             $invoice->setRequestedCaptureCase(Order\Invoice::CAPTURE_OFFLINE);
             $invoice->register();
 
-            $transaction = $this->getObjectManager()->create('Magento\Framework\DB\Transaction')
-                    ->addObject($invoice)
-                    ->addObject($invoice->getOrder());
+            $transaction = $this->getObjectManager()->create(\Magento\Framework\DB\Transaction::class)
+                ->addObject($invoice)
+                ->addObject($invoice->getOrder());
             $transaction->save();
         } else {
             $err = 'Can\'t create the invoice.';
@@ -242,16 +262,16 @@ class Success extends AbstractAction {
             $this->mfObj->log("$msgLog - $err");
         }
     }
-
     //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * https://magento.stackexchange.com/questions/297133/magento-2-2-10-change-cancelled-order-to-pending
-     * 
+     *
      * @param \Magento\Sales\Model\Order $order
-     * @param type $comment
+     * @param type                       $comment
      */
-    public function unCancelorder($order, $comment) {
+    public function unCancelorder($order, $comment)
+    {
 
         $productStockQty = [];
         foreach ($order->getAllVisibleItems() as $item) {
@@ -280,31 +300,36 @@ class Success extends AbstractAction {
 
         /* Reverting inventory */
         try {
-            $stockManagement = $this->getObjectManager()->create('\Magento\CatalogInventory\Api\StockManagementInterface');
+            $stockManagement = $this->getObjectManager()->create(StockManagementInterface::class);
             $isProductSale   = $stockManagement->registerProductsSale(
-                    $productStockQty,
-                    $order->getStore()->getWebsiteId()
+                $productStockQty,
+                $order->getStore()->getWebsiteId()
             );
 
-            /** @var \Magento\Framework\DB\Adapter\AdapterInterface $connection */
             $objectManager = $this->getObjectManager();
-            $connection    = $objectManager->create('Magento\Framework\App\ResourceConnection')->getConnection();
+
+            /**
+             * @var \Magento\Framework\DB\Adapter\AdapterInterface $connection
+             */
+            $connection = $objectManager->create(\Magento\Framework\App\ResourceConnection::class)->getConnection();
 
             //get table name
-            $deploymentConfig = $objectManager->get('Magento\Framework\App\DeploymentConfig');
+            $deploymentConfig = $objectManager->get(\Magento\Framework\App\DeploymentConfig::class);
             $prefix           = ($deploymentConfig->get('db/table_prefix'));
             $tableName        = $prefix . 'inventory_reservation';
 
             foreach ($order->getAllItems() as $item) {
-                $sku         = $item->getSku();
-                $selectQuery = "select * from " . $tableName . " where sku = '" . $sku
-                        . "' and metadata like '{\"event_type\":\"order_canceled\",\"object_type\":\"order\",\"object_id\":\"" . $order->getId() . "\"%'";
+                $sku     = $item->getSku();
+                $orderId = $order->getId();
 
+                $metadata = "{\"event_type\":\"order_canceled\",\"object_type\":\"order\",\"object_id\":\"$orderId\"%";
+
+                $selectQuery = "SELECT * FROM $tableName WHERE sku='$sku' AND metadata LIKE '$metadata'";
                 $result = $connection->fetchAll($selectQuery);
-                if ($result && sizeof($result) > 0) {
-                    $deleteQuery  = "delete from " . $tableName . " where sku = '" . $sku
-                            . "' and metadata like '{\"event_type\":\"order_canceled\",\"object_type\":\"order\",\"object_id\":\"" . $order->getId() . "\"%'";
-                    $deleteResult = $connection->query($deleteQuery);
+                
+                if ($result && count($result) > 0) {
+                    $deleteQuery = "DELETE FROM $tableName WHERE sku='$sku' AND metadata LIKE '$metadata'";
+                    $connection->query($deleteQuery);
                 }
             }
             $order->setState(Order::STATE_PENDING_PAYMENT)->setStatus(Order::STATE_PENDING_PAYMENT);
@@ -315,15 +340,14 @@ class Success extends AbstractAction {
             $order->setInventoryProcessed(true);
 
             if ($order->save()) {
-                $quoteFactory = $this->getObjectManager()->create('\Magento\Quote\Model\QuoteFactory');
+                $quoteFactory = $this->getObjectManager()->create(\Magento\Quote\Model\QuoteFactory::class);
                 $quote        = $quoteFactory->create()->load($order->getQuoteId());
                 $quote->setIsActive(false)->save();
             }
-        } catch (\Exception $e) {
+        } catch (MFException $e) {
             $order->addStatusHistoryComment($e->getMessage());
             $order->save();
         }
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

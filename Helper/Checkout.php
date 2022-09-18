@@ -9,8 +9,10 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Catalog\Helper\Data as TaxHelper;
 use Magento\Framework\App\ObjectManager;
+use Magento\Store\Model\ScopeInterface;
 
-class Checkout {
+class Checkout
+{
 
     /**
      * @var \Magento\Checkout\Model\Session
@@ -37,13 +39,13 @@ class Checkout {
      */
     protected $taxHelper;
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
     public function __construct(
-            Session $session,
-            ScopeConfigInterface $scopeConfig,
-            StoreManagerInterface $storeManager,
-            PriceCurrencyInterface $priceCurrency,
-            TaxHelper $taxHelper
+        Session $session,
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager,
+        PriceCurrencyInterface $priceCurrency,
+        TaxHelper $taxHelper
     ) {
         $this->session       = $session;
         $this->scopeConfig   = $scopeConfig;
@@ -51,8 +53,7 @@ class Checkout {
         $this->priceCurrency = $priceCurrency;
         $this->taxHelper     = $taxHelper;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Cancel last placed order with specified comment message
@@ -62,7 +63,8 @@ class Checkout {
      * @throws \Magento\Framework\Exception\LocalizedException
      * @return bool True if order cancelled, false otherwise
      */
-    public function cancelCurrentOrder($comment) {
+    public function cancelCurrentOrder($comment)
+    {
         $order = $this->session->getLastRealOrder();
         if ($order && $order->getId() && $order->getState() != Order::STATE_CANCELED) {
             $order->registerCancellation('MyFatoorah: ' . $comment)->save();
@@ -72,21 +74,22 @@ class Checkout {
 
         return false;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Restores quote (restores cart)
      *
      * @return bool
      */
-    public function restoreQuote() {
+    public function restoreQuote()
+    {
         return $this->session->restoreQuote();
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
-    private function getShippingData($isMFShipping, $item, $product, $productId, $name, $storeId, $weightRate) {
+    private function getShippingData($isMFShipping, $item, $product, $productId, $name, $storeId, $weightRate)
+    {
         $isShippingProduct = ($isMFShipping && $item->getProductType() != 'downloadable' && !$item->getIsVirtual());
         if ($isShippingProduct) {
 
@@ -110,19 +113,19 @@ class Checkout {
 
         return $data;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
      * Gets invoice Items Array
-     * @param array $items order item array 
-     * @param float $mfCurrencyRate currency rate
-     * @param int/bool $isMFShipping is Shipping integer flag
-     * @param bool $isPayment is Payment flag
      *
-     * return array
+     * @param array    $items          order item array
+     * @param float    $mfCurrencyRate currency rate
+     * @param int/bool $isMFShipping   is Shipping integer flag
+     * @param bool     $isPayment      is Payment flag
+     *                                 return array
      */
-    public function getOrderItems($items, $mfCurrencyRate, $isMFShipping, $isPayment) {
+    public function getOrderItems($items, $mfCurrencyRate, $isMFShipping, $isPayment)
+    {
 
         $store   = $this->storeManager->getStore();
         $storeId = $store->getId();
@@ -130,9 +133,9 @@ class Checkout {
         //Magento\Tax\Model\Calculation::CALC_UNIT_BASE,
         //Magento\Tax\Model\Calculation::CALC_ROW_BASE,
         //Magento\Tax\Model\Calculation::CALC_TOTAL_BASE,
-        $taxBasedOn = $this->scopeConfig->getValue('tax/calculation/algorithm', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $taxBasedOn = $this->scopeConfig->getValue('tax/calculation/algorithm', ScopeInterface::SCOPE_STORE);
 
-        $weightUnit = $this->scopeConfig->getValue('general/locale/weight_unit', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $weightUnit = $this->scopeConfig->getValue('general/locale/weight_unit', ScopeInterface::SCOPE_STORE);
         $weightRate = \MyFatoorah\Library\MyfatoorahApiV2::getWeightRate($weightUnit);
 
         $invoiceItemsArr = [];
@@ -140,16 +143,22 @@ class Checkout {
         $objectManager   = ObjectManager::getInstance();
         foreach ($items as $item) {
 
-            if ($item->getProductType() != 'simple' && (!$isPayment || ($isPayment && !$item->getIsVirtual() && $item->getProductType() != 'downloadable'))) {
+            if ($item->getProductType() != 'simple' &&
+                (!$isPayment || ($isPayment && !$item->getIsVirtual() && $item->getProductType() != 'downloadable')
+                )) {
                 continue;
             }
 
             $productId = $item->getProductId();
 
-            /** @var \Magento\Catalog\Model\Product $product */
-            $product = $objectManager->create('\Magento\Catalog\Model\Product')->load($productId); //must create a new Product from the object manager for each product
-            $name    = $product->getName();
-            $qty     = $isPayment ? intval($item->getQtyOrdered()) : intval($item->getQty());
+            //must create a new Product from the object manager for each product
+            /**
+             * @var \Magento\Catalog\Model\Product $product
+             */
+            $product = $objectManager->create(\Magento\Catalog\Model\Product::class)->load($productId);
+
+            $name = $product->getName();
+            $qty  = $isPayment ? (int) $item->getQtyOrdered() : (int) $item->getQty();
 
             $priceExTax = $this->taxHelper->getTaxPrice($product, $product->getFinalPrice(), false);
             if ($taxBasedOn == \Magento\Tax\Model\Calculation::CALC_UNIT_BASE) {
@@ -160,7 +169,15 @@ class Checkout {
             }
 
             $itemPrice    = round($priceExTax * $mfCurrencyRate, 3);
-            $shippingData = $this->getShippingData($isMFShipping, $item, $product, $productId, $name, $storeId, $weightRate);
+            $shippingData = $this->getShippingData(
+                $isMFShipping,
+                $item,
+                $product,
+                $productId,
+                $name,
+                $storeId,
+                $weightRate
+            );
 
             $invoiceItemsArr[] = [
                 'ProductName' => $name,
@@ -181,15 +198,19 @@ class Checkout {
             'amount'          => $amount
         ];
     }
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    /**
+     * @var \Magento\Sales\Model\Order $order
+     */
+    public function getInvoiceItems($order, $currencyRate, $isMFShipping, &$amount, $isPayment = false)
+    {
 
-    /** @var \Magento\Sales\Model\Order $order */
-    function getInvoiceItems($order, $currencyRate, $isMFShipping, &$amount, $isPayment = false) {
+        $priceIncTax = $this->scopeConfig->getValue('tax/calculation/price_includes_tax', ScopeInterface::SCOPE_STORE);
 
-        $priceIncTax = $this->scopeConfig->getValue('tax/calculation/price_includes_tax', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
-        /** @var \Magento\Sales\Api\Data\OrderItemInterface[]  $items */
+        /**
+         * @var \Magento\Sales\Api\Data\OrderItemInterface[]  $items
+         */
         $items            = $order->getAllItems();
         $orderItemsReturn = $this->getOrderItems($items, $currencyRate, $isMFShipping, $isPayment); //restore cart
         $invoiceItemsArr  = $orderItemsReturn['invoiceItemsArr'];
@@ -197,13 +218,18 @@ class Checkout {
 
         //------------------------------
         //Discounds and Coupon
-        $discount1 = $order->getBaseDiscountAmount() + (($priceIncTax) ? 0 : $order->getBaseDiscountTaxCompensationAmount());
-        $discount  = round($discount1 * $currencyRate, 3);
-        if ($discount) {
-            $invoiceItemsArr[] = ['ItemName' => 'Discount Amount', 'Quantity' => '1', 'UnitPrice' => "$discount", 'Weight' => '0', 'Width' => '0', 'Height' => '0', 'Depth' => '0'];
-            $amount            += $discount;
+        $discount1 = $order->getBaseDiscountAmount();
+        if (!$priceIncTax) {
+            $discount1 += $order->getBaseDiscountTaxCompensationAmount();
         }
 
+        $discount = round($discount1 * $currencyRate, 3);
+        if ($discount) {
+            $invoiceItemsArr[] = [
+                'ItemName'  => 'Discount Amount', 'Quantity'  => '1', 'UnitPrice' => "$discount",
+                'Weight'    => '0', 'Width'     => '0', 'Height'    => '0', 'Depth'     => '0'];
+            $amount            += $discount;
+        }
 
         //------------------------------
         //Shippings
@@ -215,11 +241,12 @@ class Checkout {
             if ($isMFShipping) {
                 $mfShipping = $shipping;
             } else {
-                $invoiceItemsArr[] = ['ItemName' => 'Shipping Amount', 'Quantity' => '1', 'UnitPrice' => "$shipping", 'Weight' => '0', 'Width' => '0', 'Height' => '0', 'Depth' => '0'];
+                $invoiceItemsArr[] = [
+                    'ItemName'  => 'Shipping Amount', 'Quantity'  => '1', 'UnitPrice' => "$shipping",
+                    'Weight'    => '0', 'Width'     => '0', 'Height'    => '0', 'Depth'     => '0'];
                 $amount            += $shipping;
             }
         }
-
 
         //------------------------------
         //Other fees
@@ -227,18 +254,22 @@ class Checkout {
         $fees1 = $order->getBaseMageworxFeeAmount();
         $fees  = round($fees1 * $currencyRate, 3);
         if ($fees) {
-            $invoiceItemsArr[] = ['ItemName' => 'Additional Fees', 'Quantity' => 1, 'UnitPrice' => "$fees", 'Weight' => '0', 'Width' => '0', 'Height' => '0', 'Depth' => '0'];
+            $invoiceItemsArr[] = [
+                'ItemName'  => 'Additional Fees', 'Quantity'  => 1, 'UnitPrice' => "$fees",
+                'Weight'    => '0', 'Width'     => '0', 'Height'    => '0', 'Depth'     => '0'];
             $amount            += $fees;
         }
 
         $productFees1 = $order->getBaseMageworxProductFeeAmount();
         $productFees  = round($productFees1 * $currencyRate, 3);
         if ($productFees) {
-            $invoiceItemsArr[] = ['ItemName' => 'Additional Product Fees', 'Quantity' => 1, 'UnitPrice' => "$productFees", 'Weight' => '0', 'Width' => '0', 'Height' => '0', 'Depth' => '0'];
+            $invoiceItemsArr[] = [
+                'ItemName'  => 'Additional Product Fees', 'Quantity'  => 1, 'UnitPrice' => "$productFees",
+                'Weight'    => '0', 'Width'     => '0', 'Height'    => '0', 'Depth'     => '0'];
             $amount            += $productFees;
         }
 
-//        $amount = round($amount, 3);
+        //        $amount = round($amount, 3);
 
         /*
           (print_r('FeeAmount' . $order->getBaseMageworxFeeAmount(),1));
@@ -261,12 +292,13 @@ class Checkout {
         $tax1 = $order->getBaseTotalDue() - $amount - $mfShipping;
         $tax  = round($tax1 * $currencyRate, 3);
         if ($tax) {
-            $invoiceItemsArr[] = ['ItemName' => 'Tax Amount', 'Quantity' => '1', 'UnitPrice' => "$tax", 'Weight' => '0', 'Width' => '0', 'Height' => '0', 'Depth' => '0'];
+            $invoiceItemsArr[] = [
+                'ItemName'  => 'Tax Amount', 'Quantity'  => '1', 'UnitPrice' => "$tax",
+                'Weight'    => '0', 'Width'     => '0', 'Height'    => '0', 'Depth'     => '0'];
             $amount            += $tax;
         }
 
         return $invoiceItemsArr;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

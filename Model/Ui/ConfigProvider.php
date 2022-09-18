@@ -8,10 +8,8 @@ use Magento\Framework\Locale\Resolver;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Cart;
 
-/**
- * Class ConfigProvider
- */
-class ConfigProvider implements ConfigProviderInterface {
+class ConfigProvider implements ConfigProviderInterface
+{
 
     /**
      * @var Config
@@ -33,12 +31,12 @@ class ConfigProvider implements ConfigProviderInterface {
      */
     private $cart;
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
     public function __construct(
-            Config $gatewayConfig,
-            Resolver $localeResolver,
-            CustomerSession $customerSession,
-            Cart $cart
+        Config $gatewayConfig,
+        Resolver $localeResolver,
+        CustomerSession $customerSession,
+        Cart $cart
     ) {
         $this->_gatewayConfig  = $gatewayConfig;
         $this->localeResolver  = $localeResolver;
@@ -46,14 +44,16 @@ class ConfigProvider implements ConfigProviderInterface {
         $this->cart            = $cart;
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    public function getConfig() {
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    public function getConfig()
+    {
 
         $config = [
             'title'       => $this->_gatewayConfig->getTitle(),
             'listOptions' => $this->_gatewayConfig->getKeyGateways(),
         ];
-
+        //test
+        //$config['listOptions'] = 'myfatoorah';
         if ($config['listOptions'] == 'multigateways') {
             try {
                 $config = $this->fillMultigatewaysData($config);
@@ -69,50 +69,56 @@ class ConfigProvider implements ConfigProviderInterface {
         ];
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    private function fillMultigatewaysData($config) {
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    private function fillMultigatewaysData($config)
+    {
 
         $config['lang'] = $this->getCurrentLocale();
 
+        $isApRegistered = $this->_gatewayConfig->isApplePayRegistered();
+
         $mfObj = $this->_gatewayConfig->getMyfatoorahObject();
 
-        /** @var \Magento\Quote\Model\Quote $quote */
+        /**
+         * @var \Magento\Quote\Model\Quote $quote
+         */
         $quote = $this->cart->getQuote();
 
-        $config['baseGrandTotal'] = $quote->getBaseGrandTotal();
-        $config['paymentMethods'] = $mfObj->getPaymentMethodsForDisplay($quote->getBaseGrandTotal(), $quote->getBaseCurrencyCode());
+        $baseTotal    = $quote->getBaseGrandTotal();
+        $baseCurrency = $quote->getBaseCurrencyCode();
 
+        $config['baseGrandTotal'] = $baseTotal;
+        $config['paymentMethods'] = $mfObj->getPaymentMethodsForDisplay($baseTotal, $baseCurrency, $isApRegistered);
+        
         $all = $config['paymentMethods']['all'];
         if (count($all) == 1) {
             $config['title'] = ($config['lang'] == 'ar') ? $all[0]->PaymentMethodAr : $all[0]->PaymentMethodEn;
         }
 
         //draw form section
-        if (count($config['paymentMethods']['form']) == 0) {
-            return $config;
+        if (!empty($config['paymentMethods']['form']) || !empty($config['paymentMethods']['ap'])) {
+            $customerId = $this->customerSession->getCustomer()->getId();
+
+            $config['height'] = '130';
+            $userDefinedField = '';
+            if ($this->_gatewayConfig->getSaveCard() && $customerId) {
+                $config['height'] = '180';
+                $userDefinedField = 'CK-' . $customerId;
+            }
+
+            $initSession           = $mfObj->getEmbeddedSession($userDefinedField);
+            $config['countryCode'] = $initSession->CountryCode;
+            $config['sessionId']   = $initSession->SessionId;
         }
-
-        $customerId = $this->customerSession->getCustomer()->getId();
-
-        $config['height'] = '130';
-        $userDefinedField = '';
-        if ($this->_gatewayConfig->getSaveCard() && $customerId) {
-            $config['height'] = '180';
-            $userDefinedField = 'CK-' . $customerId;
-        }
-        $initSession           = $mfObj->getEmbeddedSession($userDefinedField);
-        $config['countryCode'] = $initSession->CountryCode;
-        $config['sessionId']   = $initSession->SessionId;
-
         return $config;
     }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------
-    private function getCurrentLocale() {
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    private function getCurrentLocale()
+    {
         $currentLocaleCode = $this->localeResolver->getLocale(); // fr_CA
         $languageCode      = strstr($currentLocaleCode, '_', true);
         return $languageCode;
     }
-
-//---------------------------------------------------------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
 }

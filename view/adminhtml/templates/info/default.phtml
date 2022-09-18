@@ -3,18 +3,30 @@
  * @var \Magento\Payment\Block\Info $block
  * @see \Magento\Payment\Block\Info
  */
-$specificInfo = $block->getMFInformation();
-$paymentTitle = $block->getMethod()->getConfigData('title', $block->getInfo()->getOrder()->getStoreId());
+$payment = $block->getMFInformation();
+$title   = $block->getMethod()->getConfigData('title', $block->getInfo()->getOrder()->getStoreId());
 ?>
-<?= $block->escapeHtml($paymentTitle) ?>
-
-<?php if ($specificInfo) : ?>
+<?= $block->escapeHtml($title); ?>
+<?php if ($payment): ?>
     <table class="data-table admin__table-secondary">
-        <?php foreach ($specificInfo as $label => $value) : ?>
+        <tr>
+            <th><?= $block->escapeHtml('Invoice ID'); ?>:</th>
+            <td>
+                <?php if (isset($payment['invoice']['url'])): ?>
+                    <a href="<?= $block->escapeHtml($payment['invoice']['url']); ?>">
+                        <?= $block->escapeHtml($payment['invoice']['id']); ?>
+                    </a>
+                <?php else: ?>
+                    <?= $block->escapeHtml($payment['invoice']['id']); ?>
+                <?php endif; ?>
+            </td>
+        </tr>
+                
+        <?php foreach ($payment['info'] as $label => $value): ?>
             <tr>
-                <th><?= $block->escapeHtml($label) ?>:</th>
+                <th><?= $block->escapeHtml($label); ?>:</th>
                 <td>
-                    <?= $value ?>
+                    <?= $block->escapeHtml($value); ?>
                 </td>
             </tr>
         <?php endforeach; ?>

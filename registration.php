@@ -1,6 +1,11 @@
 <?php
 
+/**
+ * Copyright © MyFatoorah. All rights reserved.
+ * See GPL-3.0 for license details.
+ */
 if (!defined('BP')) {
+    // phpcs:ignore Magento2.Functions.DiscouragedFunction
     define('BP', dirname(getcwd()));
 }
 
@@ -12,7 +17,7 @@ if (!defined('MFSHIPPING_LOG_FILE')) {
 }
 
 \Magento\Framework\Component\ComponentRegistrar::register(
-        \Magento\Framework\Component\ComponentRegistrar::MODULE,
-        'MyFatoorah_Gateway',
-        __DIR__
+    \Magento\Framework\Component\ComponentRegistrar::MODULE,
+    'MyFatoorah_Gateway',
+    __DIR__
 );

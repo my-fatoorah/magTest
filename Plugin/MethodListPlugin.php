@@ -7,7 +7,8 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\Module\Manager;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
-class MethodListPlugin {
+class MethodListPlugin
+{
 
     /**
      * Core store config
@@ -23,17 +24,19 @@ class MethodListPlugin {
      */
     protected $_scopeConfig;
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
     public function __construct(
-            Manager $moduleManager,
-            ScopeConfigInterface $scopeConfig) {
+        Manager $moduleManager,
+        ScopeConfigInterface $scopeConfig
+    ) {
 
         $this->moduleManager = $moduleManager;
         $this->_scopeConfig  = $scopeConfig;
     }
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
-    public function afterGetAvailableMethods(MethodList $subject, $availableMethods, CartInterface $quote = null) {
+    //-----------------------------------------------------------------------------------------------------------------------------------------
+    public function afterGetAvailableMethods(MethodList $subject, $availableMethods, CartInterface $quote = null)
+    {
 
         $shippingMethod = $quote ? $quote->getShippingAddress()->getShippingMethod() : '';
 
@@ -49,22 +52,33 @@ class MethodListPlugin {
         return $availableMethods;
     }
 
-//-----------------------------------------------------------------------------------------------------------------------------------------
-    function getMFPaymentCode() {
+    //-----------------------------------------------------------------------------------------------------------------------------------------
+    private function getMFPaymentCode()
+    {
 
-//        $store = $this->getStore();
+        //        $store = $this->getStore();
         $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
 
-        if ($this->moduleManager->isEnabled('MyFatoorah_Gateway') && $this->_scopeConfig->getValue('payment/myfatoorah_payment/active', $scope)) {
-            return 'myfatoorah_payment';
-        } else if ($this->moduleManager->isEnabled('MyFatoorah_MyFatoorahPaymentGateway') && $this->_scopeConfig->getValue('payment/myfatoorah_gateway/active', $scope)) {
-            return 'myfatoorah_gateway';
-        } else if ($this->moduleManager->isEnabled('MyFatoorah_EmbedPay') && $this->_scopeConfig->getValue('payment/embedpay/active', $scope)) {
-            return 'embedpay';
+        $module = $this->moduleManager;
+        $config = $this->_scopeConfig;
+        
+        $mgCode = 'myfatoorah_payment';
+        $mmCode = 'myfatoorah_gateway';
+        $meCode = 'embedpay';
+        
+        $mgName = 'MyFatoorah_Gateway';
+        $mmName = 'MyFatoorah_MyFatoorahPaymentGateway';
+        $meName = 'MyFatoorah_EmbedPay';
+
+        if ($module->isEnabled($mgName) && $config->getValue("payment/$mgCode/active", $scope)) {
+            return $mgCode;
+        } elseif ($module->isEnabled($mmName) && $config->getValue("payment/$mmCode/active", $scope)) {
+            return $mmCode;
+        } elseif ($module->isEnabled($meName) && $config->getValue("payment/$meCode/active", $scope)) {
+            return $meCode;
         } else {
             return false;
         }
     }
-
-//-----------------------------------------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------------------------------------------------------------
 }

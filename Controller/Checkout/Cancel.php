@@ -2,9 +2,11 @@
 
 namespace MyFatoorah\Gateway\Controller\Checkout;
 
-class Cancel extends AbstractAction {
+class Cancel extends AbstractAction
+{
 
-    public function execute() {
+    public function execute()
+    {
 
         $error = $this->getRequest()->get('error');
         $this->getMessageManager()->addErrorMessage(__($error));
@@ -18,5 +20,4 @@ class Cancel extends AbstractAction {
         $this->getCheckoutHelper()->restoreQuote(); //restore cart
         $this->_redirect('checkout/cart');
     }
-
 }
