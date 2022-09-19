@@ -1,5 +1,5 @@
 {
-    "name": "myfatoorah/magento2-gateway",
+    "name": "myfatoorah/magtest",
     "description": "The official MyFatoorah Payment Gateway for Magento2.",
     "version": "2.1.0",
     "type": "magento2-module",
